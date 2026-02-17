@@ -1,0 +1,72 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-add-a-new-authenticated-user-facing-profile-area-in-the-frontend-where-users-can-view-edit-their-profile-basics-see-their-referral-code-and-bonus-balances-apply-a-referral-code-once-and-upload-manage-their-cab-and-driver-attachments",
+      "featureTitle": "Add a new authenticated user-facing Profile area in the frontend where users can: view/edit their profile basics, see their referral code and bonus balances, apply a referral code (once), and upload/manage their cab and driver attachments.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/AuthRequiredScreen.tsx",
+        "frontend/src/components/ProfileSetupDialog.tsx",
+        "frontend/src/hooks/useCallerProfile.ts",
+        "frontend/src/pages/ProfilePage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-the-frontend-navigation-to-include-an-authenticated-only-entry-point-to-the-new-profile-area-on-both-desktop-and-mobile-menus-without-exposing-admin-only-functionality-to-non-admin-users",
+      "featureTitle": "Update the frontend navigation to include an authenticated-only entry point to the new Profile area on both desktop and mobile menus, without exposing admin-only functionality to non-admin users.",
+      "files": [
+        "frontend/src/components/SiteHeader.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-react-query-hooks-and-frontend-backend-type-alignment-for-all-new-profile-attachment-referral-apis-so-the-frontend-can-reliably-call-them-and-update-ui-state-after-mutations-uploads-applying-referral-code-etc",
+      "featureTitle": "Add React Query hooks and frontend-backend type alignment for all new profile/attachment/referral APIs so the frontend can reliably call them and update UI state after mutations (uploads, applying referral code, etc.).",
+      "files": [
+        "frontend/src/hooks/useAttachments.ts",
+        "frontend/src/hooks/useReferral.ts",
+        "frontend/src/pages/ProfilePage.tsx",
+        "frontend/src/pages/admin/AdminBookingsPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

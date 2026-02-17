@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "New project",
+  "architectural_notes": [],
+  "known_issues": [],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "feature-add-a-new-authenticated-user-facing-profile-area-in-the-frontend-where-users-can-view-edit-their-profile-basics-see-their-referral-code-and-bonus-balances-apply-a-referral-code-once-and-upload-manage-their-cab-and-driver-attachments",
+      "title": "Add a new authenticated user-facing Profile area in the frontend where users can: view/edit their profile basics, see their referral code and bonus balances, apply a referral code (once), and upload/manage their cab and driver attachments.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-frontend-navigation-to-include-an-authenticated-only-entry-point-to-the-new-profile-area-on-both-desktop-and-mobile-menus-without-exposing-admin-only-functionality-to-non-admin-users",
+      "title": "Update the frontend navigation to include an authenticated-only entry point to the new Profile area on both desktop and mobile menus, without exposing admin-only functionality to non-admin users.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-react-query-hooks-and-frontend-backend-type-alignment-for-all-new-profile-attachment-referral-apis-so-the-frontend-can-reliably-call-them-and-update-ui-state-after-mutations-uploads-applying-referral-code-etc",
+      "title": "Add React Query hooks and frontend-backend type alignment for all new profile/attachment/referral APIs so the frontend can reliably call them and update UI state after mutations (uploads, applying referral code, etc.).",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Add cab attachment feature",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Add driver attachment profile feature",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Add referral bonus program for customers and drivers",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Extend the backend user profile model to support separate customer vs driver profile data, including fields needed for a driver profile and cab/driver attachments metadata, while preserving existing profile behavior (name).",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Implement backend storage and APIs for uploading and retrieving two attachment types tied to a user: (1) cab attachment and (2) driver attachment, including filename and content type, with access control to ensure only the owner or an admin can upload/view/download them.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Add a backend referral system that supports: generating a referral code per user (customer or driver), allowing a user to apply a referral code (referrer) once, and tracking referral bonus balances separately for customers and drivers.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Implement backend logic and admin-only APIs to award referral bonuses to both the referrer and the referred party (customer and driver) based on an admin-triggered event tied to a booking (e.g., when an admin marks a booking as completed).",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "status": "pending"
+    }
+  ],
+  "projectName": "Aasra Cab Portal",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

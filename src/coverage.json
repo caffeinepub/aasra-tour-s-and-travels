@@ -1,0 +1,118 @@
+{
+  "kind": "coverage_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-17T07:01:41.269Z",
+  "sources": {
+    "buildRequest": true,
+    "implementationPlan": true
+  },
+  "requirements": {
+    "total": 7,
+    "implemented": 3,
+    "items": [
+      {
+        "id": "REQ-1",
+        "summary": "Extend the backend user profile model to support separate customer vs driver profile data, including fields needed for a driver profile and cab/driver attachments metadata, while preserving existing profile behavior (name).",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Implement backend storage and APIs for uploading and retrieving two attachment types tied to a user: (1) cab attachment and (2) driver attachment, including filename and content type, with access control to ensure only the owner or an admin can upload/view/download them.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Add a backend referral system that supports: generating a referral code per user (customer or driver), allowing a user to apply a referral code (referrer) once, and tracking referral bonus balances separately for customers and drivers.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Implement backend logic and admin-only APIs to award referral bonuses to both the referrer and the referred party (customer and driver) based on an admin-triggered event tied to a booking (e.g., when an admin marks a booking as completed).",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Add a new authenticated user-facing Profile area in the frontend where users can: view/edit their profile basics, see their referral code and bonus balances, apply a referral code (once), and upload/manage their cab and driver attachments.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/ProfilePage.tsx",
+          "frontend/src/components/AuthRequiredScreen.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/components/ProfileSetupDialog.tsx",
+          "frontend/src/hooks/useCallerProfile.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/ProfilePage.tsx",
+          "frontend/src/components/AuthRequiredScreen.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/components/ProfileSetupDialog.tsx",
+          "frontend/src/hooks/useCallerProfile.ts"
+        ]
+      },
+      {
+        "id": "REQ-6",
+        "summary": "Update the frontend navigation to include an authenticated-only entry point to the new Profile area on both desktop and mobile menus, without exposing admin-only functionality to non-admin users.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/SiteHeader.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/SiteHeader.tsx"
+        ]
+      },
+      {
+        "id": "REQ-7",
+        "summary": "Add React Query hooks and frontend-backend type alignment for all new profile/attachment/referral APIs so the frontend can reliably call them and update UI state after mutations (uploads, applying referral code, etc.).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useReferral.ts",
+          "frontend/src/hooks/useAttachments.ts",
+          "frontend/src/pages/admin/AdminBookingsPage.tsx",
+          "frontend/src/pages/ProfilePage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useReferral.ts",
+          "frontend/src/hooks/useAttachments.ts",
+          "frontend/src/pages/admin/AdminBookingsPage.tsx",
+          "frontend/src/pages/ProfilePage.tsx"
+        ]
+      }
+    ]
+  },
+  "changedFiles": [
+    "backend/blob-storage/Mixin.mo",
+    "backend/blob-storage/Storage.mo",
+    "backend/main.mo",
+    "backend/migration.mo",
+    "build-request.json",
+    "caffeine.lock.json",
+    "feature_evidence.json",
+    "frontend-file-summaries.txt",
+    "frontend-implementation-plan.json",
+    "frontend/src/App.tsx",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/AuthRequiredScreen.tsx",
+    "frontend/src/components/ProfileSetupDialog.tsx",
+    "frontend/src/components/SiteHeader.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useAttachments.ts",
+    "frontend/src/hooks/useCallerProfile.ts",
+    "frontend/src/hooks/useReferral.ts",
+    "frontend/src/pages/ProfilePage.tsx",
+    "frontend/src/pages/admin/AdminBookingsPage.tsx",
+    "project_state.json",
+    "scratch/component-selection.json",
+    "spec.md",
+    "spec_vs_diff_report.json"
+  ]
+}
