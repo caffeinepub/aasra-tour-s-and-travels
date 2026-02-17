@@ -41,7 +41,10 @@ export type BookingStatus = { 'cancelled' : null } |
   { 'completed' : null } |
   { 'accepted' : null } |
   { 'refused' : null };
-export interface CustomerProfile { 'name' : string }
+export interface CustomerProfile {
+  'name' : string,
+  'preferredPaymentMethod' : [] | [PaymentMethod],
+}
 export interface DriverProfile {
   'cabNumber' : string,
   'vehicleType' : VehicleType,
@@ -49,6 +52,10 @@ export interface DriverProfile {
   'yearOfManufacture' : bigint,
 }
 export type ExternalBlob = Uint8Array;
+export type PaymentMethod = { 'UPI' : null } |
+  { 'creditCard' : null } |
+  { 'cash' : null } |
+  { 'debitCard' : null };
 export interface RateCard {
   'suv' : bigint,
   'mini' : bigint,

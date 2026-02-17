@@ -16,6 +16,7 @@ export class ExternalBlob {
 }
 export interface CustomerProfile {
     name: string;
+    preferredPaymentMethod?: PaymentMethod;
 }
 export interface RateCard {
     suv: bigint;
@@ -72,6 +73,12 @@ export enum BookingStatus {
     completed = "completed",
     accepted = "accepted",
     refused = "refused"
+}
+export enum PaymentMethod {
+    UPI = "UPI",
+    creditCard = "creditCard",
+    cash = "cash",
+    debitCard = "debitCard"
 }
 export enum UserRole {
     admin = "admin",

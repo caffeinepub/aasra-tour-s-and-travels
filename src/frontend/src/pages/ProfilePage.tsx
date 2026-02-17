@@ -3,7 +3,7 @@ import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useGetCallerUserProfile, useSaveCallerUserProfile, getProfileDisplayName } from '../hooks/useCallerProfile';
 import { useGetReferralCode, useGetReferralBonus, useApplyReferralCode } from '../hooks/useReferral';
 import { useGetCallerAttachment, useUploadAttachment } from '../hooks/useAttachments';
-import { Variant_cab_driver } from '../backend';
+import { Variant_cab_driver, PaymentMethod } from '../backend';
 import AuthRequiredScreen from '../components/AuthRequiredScreen';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
-import { User, Gift, Upload, FileText, Download, CheckCircle, AlertCircle, Loader2, Copy, Check } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { User, Gift, Upload, FileText, Download, CheckCircle, AlertCircle, Loader2, Copy, Check, CreditCard } from 'lucide-react';
+import { PAYMENT_METHODS, getPaymentMethodLabel } from '../utils/paymentMethods';
 
 export default function ProfilePage() {
   const { identity } = useInternetIdentity();
@@ -29,6 +31,7 @@ export default function ProfilePage() {
   const uploadAttachment = useUploadAttachment();
 
   const [name, setName] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | undefined>(undefined);
   const [referralCodeInput, setReferralCodeInput] = useState('');
   const [referralError, setReferralError] = useState('');
   const [referralSuccess, setReferralSuccess] = useState(false);
@@ -38,9 +41,12 @@ export default function ProfilePage() {
 
   const isAuthenticated = !!identity;
 
-  // Initialize name from profile
+  // Initialize name and payment method from profile
   if (userProfile && !name) {
     setName(getProfileDisplayName(userProfile));
+    if (userProfile.__kind__ === 'customer') {
+      setPaymentMethod(userProfile.customer.preferredPaymentMethod);
+    }
   }
 
   if (!isAuthenticated) {
@@ -54,7 +60,10 @@ export default function ProfilePage() {
       if (userProfile.__kind__ === 'customer') {
         await saveProfile.mutateAsync({
           __kind__: 'customer',
-          customer: { name: name.trim() },
+          customer: { 
+            name: name.trim(),
+            preferredPaymentMethod: paymentMethod,
+          },
         });
       } else if (userProfile.__kind__ === 'driver') {
         await saveProfile.mutateAsync({
@@ -151,6 +160,8 @@ export default function ProfilePage() {
 
   const hasAppliedReferral = referralBonus !== null;
   const currentDisplayName = userProfile ? getProfileDisplayName(userProfile) : '';
+  const currentPaymentMethod = userProfile?.__kind__ === 'customer' ? userProfile.customer.preferredPaymentMethod : undefined;
+  const hasChanges = name !== currentDisplayName || paymentMethod !== currentPaymentMethod;
 
   return (
     <div className="flex flex-col">
@@ -194,9 +205,46 @@ export default function ProfilePage() {
                         disabled={saveProfile.isPending}
                       />
                     </div>
+
+                    {userProfile?.__kind__ === 'customer' && (
+                      <>
+                        <Separator />
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <CreditCard className="h-5 w-5 text-muted-foreground" />
+                            <Label>Preferred Payment Method</Label>
+                          </div>
+                          <RadioGroup
+                            value={paymentMethod || ''}
+                            onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
+                            className="space-y-3"
+                          >
+                            {PAYMENT_METHODS.map((method) => (
+                              <div
+                                key={method.value}
+                                className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50"
+                              >
+                                <RadioGroupItem value={method.value} id={`profile-${method.value}`} />
+                                <Label
+                                  htmlFor={`profile-${method.value}`}
+                                  className="flex-1 cursor-pointer font-normal"
+                                >
+                                  <div className="font-medium">{method.label}</div>
+                                  <div className="text-sm text-muted-foreground">{method.description}</div>
+                                </Label>
+                              </div>
+                            ))}
+                          </RadioGroup>
+                          <p className="text-sm text-muted-foreground">
+                            This will be pre-selected when booking a cab
+                          </p>
+                        </div>
+                      </>
+                    )}
+
                     <Button
                       onClick={handleSaveProfile}
-                      disabled={!name.trim() || saveProfile.isPending || name === currentDisplayName}
+                      disabled={!name.trim() || saveProfile.isPending || !hasChanges}
                     >
                       {saveProfile.isPending ? (
                         <>

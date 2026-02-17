@@ -1,14 +1,14 @@
 import Map "mo:core/Map";
-import Runtime "mo:core/Runtime";
-import AccessControl "authorization/access-control";
-import MixinAuthorization "authorization/MixinAuthorization";
 import Principal "mo:core/Principal";
-import Nat "mo:core/Nat";
+import Runtime "mo:core/Runtime";
 import Time "mo:core/Time";
-import Text "mo:core/Text";
+import Nat "mo:core/Nat";
 import Iter "mo:core/Iter";
 import Array "mo:core/Array";
+import Text "mo:core/Text";
 import Order "mo:core/Order";
+import AccessControl "authorization/access-control";
+import MixinAuthorization "authorization/MixinAuthorization";
 import Storage "blob-storage/Storage";
 import Migration "migration";
 import MixinStorage "blob-storage/Mixin";
@@ -21,9 +21,29 @@ actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
+  public type PaymentMethod = {
+    #cash;
+    #UPI;
+    #creditCard;
+    #debitCard;
+  };
+
+  module PaymentMethod {
+    public func fromText(paymentMethodText : Text) : PaymentMethod {
+      switch (paymentMethodText) {
+        case ("cash") { #cash };
+        case ("UPI") { #UPI };
+        case ("creditCard") { #creditCard };
+        case ("debitCard") { #debitCard };
+        case (_) { Runtime.trap("Unsupported payment method: " # paymentMethodText) };
+      };
+    };
+  };
+
   // User Profile Model
   public type CustomerProfile = {
     name : Text;
+    preferredPaymentMethod : ?PaymentMethod;
   };
 
   public type DriverProfile = {
@@ -74,7 +94,12 @@ actor {
   };
 
   // Attachments API
-  public shared ({ caller }) func uploadAttachment(attachmentType : { #cab; #driver }, file : Storage.ExternalBlob, name : Text, contentType : Text) : async () {
+  public shared ({ caller }) func uploadAttachment(
+    attachmentType : { #cab; #driver },
+    file : Storage.ExternalBlob,
+    name : Text,
+    contentType : Text,
+  ) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can upload attachments");
     };
@@ -92,7 +117,10 @@ actor {
     };
   };
 
-  public query ({ caller }) func getAttachment(attachmentType : { #cab; #driver }, user : Principal) : async ?Attachment {
+  public query ({ caller }) func getAttachment(
+    attachmentType : { #cab; #driver },
+    user : Principal
+  ) : async ?Attachment {
     if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
       Runtime.trap("Unauthorized: Can only view your own attachments or must be admin");
     };
@@ -103,7 +131,9 @@ actor {
     };
   };
 
-  public query ({ caller }) func getCallerAttachment(attachmentType : { #cab; #driver }) : async ?Attachment {
+  public query ({ caller }) func getCallerAttachment(
+    attachmentType : { #cab; #driver }
+  ) : async ?Attachment {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access attachments");
     };

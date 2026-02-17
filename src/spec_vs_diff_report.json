@@ -1,94 +1,44 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T07:01:41.266Z",
-  "summary": "Diff adds a new /profile route with authenticated UI, new React Query hooks for profile/attachments/referrals, and backend scaffolding for user profile variants and attachment storage. However, key backend requirements for referral codes/bonus tracking and booking-triggered payouts are not evidenced, and attachment validation/download APIs and attachment metadata exposure in profiles are not shown. There are also some extra frontend UX components not explicitly requested.",
+  "generatedAt": "2026-02-17T19:16:44.488Z",
+  "summary": "Implemented a preferred payment method field for customer profiles in the Motoko backend (with migration) and added frontend utilities plus logic to initialize booking form payment method from the saved preference. However, support is not clearly implemented for driver profiles, and the Profile page UI for selecting/saving the payment method is not evidenced in the provided diff excerpt.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Backend profile queries should return the caller’s current profile including whether they are a customer/driver and any attachment metadata (presence, filename, content type, upload time).",
-      "reason": "Backend stores attachments in separate maps (cabAttachments/driverAttachments) and the UserProfile type contains only customer/driver fields; no API is shown that returns profile plus attachment metadata together as required.",
-      "evidence": [
-        "backend/main.mo"
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "requirement": "Backend must enforce and document limits with clear errors for unsupported content types or oversized attachments.",
-      "reason": "uploadAttachment stores the blob/name/contentType but shows no content-type allowlist checks, size checks, or explicit error messages for these cases.",
-      "evidence": [
-        "backend/main.mo"
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "requirement": "Backend must provide methods to download attachment bytes for an attachment type (with owner/admin access control).",
-      "reason": "Only getAttachment/getCallerAttachment returning ?Attachment is shown; no explicit download-bytes API is evidenced.",
-      "evidence": [
-        "backend/main.mo"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "requirement": "Implement backend referral system: stable referral code per user retrievable via query, apply code once (immutable referrer), track separate customer/driver bonus balances, and prevent self-referrals/invalid codes with explicit errors.",
-      "reason": "Frontend calls generateReferralCode/getReferralBonus/applyReferralCode, but no corresponding backend types/state/method implementations are shown in backend/main.mo excerpt.",
-      "evidence": [
-        "frontend/src/hooks/useReferral.ts",
-        "backend/main.mo"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "requirement": "Admin-only API to update booking status (at minimum set to completed) and award referral bonuses to referrer and referred party with fixed rule set; idempotent so a booking cannot award more than once; non-admin cannot trigger payouts.",
-      "reason": "The diff shows BookingStatus type/module beginning, but does not evidence an admin-only booking status update method nor any referral payout logic or idempotency tracking.",
+      "requirement": "Backend UserProfile data can persist an optional preferred payment method for both customer and driver variants (or a shared place if modeled that way).",
+      "reason": "The diff shows `preferredPaymentMethod` added only to `CustomerProfile`; `DriverProfile` does not include it, and the migration only populates it for the customer variant.",
       "evidence": [
         "backend/main.mo",
-        "frontend/src/pages/admin/AdminBookingsPage.tsx"
+        "backend/migration.mo"
       ]
     },
     {
-      "id": "REQ-5",
-      "requirement": "Profile UI should allow downloading/viewing uploaded cab and driver attachments (after upload, metadata displayed and downloading/viewing possible).",
-      "reason": "ProfilePage is truncated; the shown part includes hooks and upload progress state, but no evidence of a download/view implementation or backend download API usage is present in the visible diff summary.",
+      "id": "REQ-2",
+      "requirement": "Add a \"Payment Method\" section to the authenticated user Profile page that allows the user to select and save a preferred payment method.",
+      "reason": "The ProfilePage diff excerpt shows state/handlers for `paymentMethod` and saving it for customers, but the actual UI section (radio group/controls, display of current value) is not visible in the provided truncated content, so implementation cannot be confirmed from the diff summary alone.",
       "evidence": [
-        "frontend/src/pages/ProfilePage.tsx",
-        "frontend/src/hooks/useAttachments.ts"
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "requirement": "React Query caches should be invalidated/refetched on successful mutations for all new profile/referral/attachment flows (including applying referral code should refresh all relevant referral info).",
-      "reason": "useApplyReferralCode only invalidates ['referralBonus'] and does not invalidate/refetch the referral code/info query key(s); attachment upload invalidates attachment query but no broader profile/referral invalidations are evidenced.",
-      "evidence": [
-        "frontend/src/hooks/useReferral.ts",
-        "frontend/src/hooks/useAttachments.ts"
+        "frontend/src/pages/ProfilePage.tsx (truncated)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Profile setup modal dialog forcing new authenticated users to enter a name (ProfileSetupDialog).",
-      "reason": "BuildRequest did not ask for a forced onboarding modal; it only requested a Profile area where users can view/edit profile basics.",
+      "description": "Added backend helper `PaymentMethod.fromText` that parses a Text value into the PaymentMethod variant and traps on unsupported values.",
+      "reason": "The BuildRequest only requires storing/exposing the preferred payment method via existing profile APIs; it does not request text parsing utilities or trap-based validation helpers.",
       "evidence": [
-        "frontend/src/components/ProfileSetupDialog.tsx",
-        "frontend-file-summaries.txt"
+        "backend/main.mo"
       ]
     }
   ],
-  "confidence": 0.74,
+  "confidence": 0.66,
   "changed_files": [
     "backend/main.mo",
     "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/App.tsx",
-    "frontend/src/components/AuthRequiredScreen.tsx",
-    "frontend/src/components/ProfileSetupDialog.tsx",
-    "frontend/src/components/SiteHeader.tsx",
-    "frontend/src/hooks/useAttachments.ts",
-    "frontend/src/hooks/useCallerProfile.ts",
-    "frontend/src/hooks/useReferral.ts",
+    "frontend/src/pages/BookCabPage.tsx",
     "frontend/src/pages/ProfilePage.tsx",
-    "frontend/src/pages/admin/AdminBookingsPage.tsx",
+    "frontend/src/utils/paymentMethods.ts",
     "project_state.json"
   ]
 }

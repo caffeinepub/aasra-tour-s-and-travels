@@ -1,15 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Add driver/cab attachment profiles and a referral bonus program for customers and drivers, with a new authenticated Profile area.
+**Goal:** Allow users to save a preferred payment method in their profile and have it preselected when booking a cab.
 
 **Planned changes:**
-- Extend the backend user profile model to support customer vs driver profile data and attachment metadata while preserving existing name-only profile behavior.
-- Add backend storage and APIs to upload/replace and retrieve/download two user-tied attachments: cab attachment and driver attachment, with strict owner/admin access control and size/type validation errors.
-- Implement a backend referral system: stable referral codes per user, one-time application of a referrer code, and separate customer vs driver bonus balances with validation (no self-referral, invalid code errors).
-- Add admin-only backend APIs to mark bookings completed and award referral bonuses to referrer and referred users using a single defined ruleset, with idempotent payout behavior.
-- Create a new authenticated-only frontend Profile route to view/edit profile basics, view referral code/status and bonus balances, apply a referral code once, and upload/manage/download cab/driver attachments.
-- Update frontend navigation to show a "Profile" link only for authenticated users on desktop and mobile, while keeping admin-only navigation unchanged.
-- Add React Query hooks and frontend/backend type alignment for all new profile, attachment, referral, and booking-status APIs, including cache invalidation and UI error surfacing.
+- Extend the backend user profile model to store an optional preferred payment method and return/save it via existing profile get/save APIs (including any needed safe migration defaulting to null/empty).
+- Add a “Payment Method” section to the Profile page to view, select, and save the preferred payment method (English UI text) using the existing profile save + refetch patterns.
+- Update the booking form to initialize the payment method selection from the saved preferred payment method when available, while still allowing changes before submit and preserving existing validation when not set.
 
-**User-visible outcome:** Authenticated users can open a Profile page to manage their profile, upload cab/driver attachments, see and share their referral code, view customer/driver bonus balances, and apply a referral code once; admins can mark bookings completed to trigger referral bonus payouts.
+**User-visible outcome:** Signed-in users can set a preferred payment method in their profile, and the booking form will auto-select it (if saved) while still letting them choose a different method before submitting.

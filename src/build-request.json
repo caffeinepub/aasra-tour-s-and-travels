@@ -1,169 +1,77 @@
 {
   "kind": "build_request",
-  "title": "Add driver/cab attachment profiles and referral bonus program for customers and drivers",
+  "title": "Add saved payment method to user profile and default it in bookings",
   "projectName": "Aasra Cab Portal",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Extend the backend user profile model to support separate customer vs driver profile data, including fields needed for a driver profile and cab/driver attachments metadata, while preserving existing profile behavior (name).",
+      "text": "Extend the backend user profile model to store an optional preferred payment method for the authenticated user, and expose it through the existing profile get/save APIs.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-8"
+          "msg-user-Add-payment-method"
         ],
         "quotes": [
-          "Add the cab attachment and  driver attachment profile and referral bonus customer and driver"
+          "Add payment method"
         ]
       },
       "acceptanceCriteria": [
-        "Existing APIs for saving/fetching the caller profile continue to work for users with only a name set.",
-        "A user can be designated as a driver (in their profile or via an explicit driver-profile save API) without breaking customer flows.",
-        "The backend exposes query methods that return the caller’s current profile including whether they are a customer/driver and any attachment metadata (presence, filename, content type, upload time).",
-        "Only the profile owner (caller) or an admin can read that user’s profile/driver fields."
+        "Backend UserProfile data can persist an optional preferred payment method for both customer and driver variants (or a shared place if modeled that way).",
+        "Existing getCallerUserProfile/getUserProfile responses include the saved preferred payment method when set.",
+        "saveCallerUserProfile persists updates to the preferred payment method.",
+        "If an upgrade/migration is required for existing deployed state, migration sets the new field to null/empty without breaking existing profiles."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Implement backend storage and APIs for uploading and retrieving two attachment types tied to a user: (1) cab attachment and (2) driver attachment, including filename and content type, with access control to ensure only the owner or an admin can upload/view/download them.",
-      "target": "backend",
+      "text": "Add a \"Payment Method\" section to the authenticated user Profile page that allows the user to select and save a preferred payment method (e.g., Cash, UPI, Credit/Debit Card, Net Banking).",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-8"
+          "msg-user-Add-payment-method"
         ],
         "quotes": [
-          "Add the cab attachment and  driver attachment profile and referral bonus customer and driver"
+          "Add payment method"
         ]
       },
       "acceptanceCriteria": [
-        "There are backend methods to upload/replace the caller’s cab attachment and driver attachment (each independently).",
-        "There are backend methods to fetch attachment metadata for the caller, and to download the bytes for an attachment type.",
-        "Unauthorized users cannot access another user’s attachments; admins can access any user’s attachments.",
-        "Uploading a new attachment for the same attachment type replaces the previous one.",
-        "Backend returns clear errors for unsupported content types or oversized attachments (limits must be enforced and documented in error text)."
+        "Profile page displays the currently saved preferred payment method (or shows it as not set).",
+        "User can select a preferred payment method and save it using existing profile save flow and React Query invalidation/refetch patterns.",
+        "User-facing text is in English."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Add a backend referral system that supports: generating a referral code per user (customer or driver), allowing a user to apply a referral code (referrer) once, and tracking referral bonus balances separately for customers and drivers.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-8"
-        ],
-        "quotes": [
-          "Add the cab attachment and  driver attachment profile and referral bonus customer and driver"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Each authenticated user has a stable referral code retrievable via a backend query method.",
-        "A user can submit/apply a referral code via a backend method; applying sets the user’s referrer and cannot be changed after it is set.",
-        "The backend tracks referral bonus balances for (a) customer bonus and (b) driver bonus, and exposes query methods for the caller to view their balances and referral info.",
-        "The backend prevents self-referrals and invalid referral codes with explicit errors."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Implement backend logic and admin-only APIs to award referral bonuses to both the referrer and the referred party (customer and driver) based on an admin-triggered event tied to a booking (e.g., when an admin marks a booking as completed).",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-8"
-        ],
-        "quotes": [
-          "Add the cab attachment and  driver attachment profile and referral bonus customer and driver"
-        ]
-      },
-      "acceptanceCriteria": [
-        "There is an admin-only backend method to update a booking’s status (at minimum: set to completed).",
-        "When a booking is marked completed, referral bonuses are awarded according to a single, defined rule set in the backend (including fixed bonus amounts for customer and driver).",
-        "A booking cannot award referral bonuses more than once (idempotent behavior).",
-        "Non-admin callers cannot update booking status or trigger referral payouts."
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Add a new authenticated user-facing Profile area in the frontend where users can: view/edit their profile basics, see their referral code and bonus balances, apply a referral code (once), and upload/manage their cab and driver attachments.",
+      "text": "When a signed-in user opens the booking form, preselect the booking payment method to the user’s saved preferred payment method (when available) while still allowing the user to change it before submitting.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-8"
+          "msg-user-Add-payment-method"
         ],
         "quotes": [
-          "Add the cab attachment and  driver attachment profile and referral bonus customer and driver"
+          "Add payment method"
         ]
       },
       "acceptanceCriteria": [
-        "A new route is available (e.g., \"/profile\") and is only accessible to authenticated users; unauthenticated users are prompted to log in.",
-        "The Profile UI shows: user name, referral code, referral status (whether a referrer is set), and current bonus balances for customer and driver.",
-        "The Profile UI includes a form to apply a referral code; once applied successfully, the input is disabled and the applied referrer is shown.",
-        "The Profile UI allows uploading a cab attachment and a driver attachment; after upload, metadata is displayed (filename/content type) and downloading/viewing is possible for the user.",
-        "All user-facing text is in English and uses the existing UI component patterns (shadcn components, Tailwind styling)."
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "Update the frontend navigation to include an authenticated-only entry point to the new Profile area on both desktop and mobile menus, without exposing admin-only functionality to non-admin users.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-8"
-        ],
-        "quotes": [
-          "Add the cab attachment and  driver attachment profile and referral bonus customer and driver"
-        ]
-      },
-      "acceptanceCriteria": [
-        "When a user is authenticated, the header shows a \"Profile\" link in both desktop and mobile navigation; when not authenticated, it does not show.",
-        "The existing rule for showing \"Admin\" only to authenticated admin users remains unchanged.",
-        "Navigation changes do not modify any frontend immutable paths listed by the system constraints."
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "text": "Add React Query hooks and frontend-backend type alignment for all new profile/attachment/referral APIs so the frontend can reliably call them and update UI state after mutations (uploads, applying referral code, etc.).",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-8"
-        ],
-        "quotes": [
-          "Add the cab attachment and  driver attachment profile and referral bonus customer and driver"
-        ]
-      },
-      "acceptanceCriteria": [
-        "All new backend methods are reachable through the generated frontend backend bindings (types compile in TypeScript).",
-        "Profile/referral/attachment queries are cached with stable query keys and are invalidated/refetched on successful mutations.",
-        "Errors from backend calls are surfaced in the UI using existing alert/error patterns (English messages)."
+        "If the caller has a preferred payment method saved, Book a Cab page initializes the payment method radio group to that value.",
+        "If no preferred payment method is saved, the payment method starts blank and the existing validation continues to require selection.",
+        "Submitting a booking continues to store the chosen paymentMethod on the BookingRequest exactly as selected on the form."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor with all logic in backend/main.mo.",
-    "Only generate and use backend/migration.mo if state upgrades require migration according to the project migration policy.",
-    "Do not edit frontend paths listed as immutable: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui.",
-    "Use English for any user-facing text."
+    "Do not integrate third-party payment processing or external databases/services for this change.",
+    "Do not collect or store sensitive card data (PAN, CVV, full card number); payment method should be stored as a simple non-sensitive enum/string selection.",
+    "Respect the single-actor Motoko backend architecture (all logic in backend/main.mo); only add backend/migration.mo changes if a state upgrade is needed."
   ],
   "nonGoals": [
-    "Integrating third-party storage providers for attachments (e.g., S3/Google Drive).",
-    "Adding third-party authentication providers beyond Internet Identity.",
-    "Implementing real-time updates (WebSockets) for referral or booking changes.",
-    "Building a full driver dispatch system or live trip tracking."
+    "Processing real payments, charging customers, refunds, or payment confirmations.",
+    "Stripe or other payment gateway integration.",
+    "Storing multiple saved cards/bank accounts or billing addresses."
   ],
   "imageRequirements": {
     "required": [],
-    "edits": [
-      ""
-    ]
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
+    "edits": []
   }
 }

@@ -58,7 +58,16 @@ export const Attachment = IDL.Record({
   'name' : IDL.Text,
   'uploadTime' : IDL.Int,
 });
-export const CustomerProfile = IDL.Record({ 'name' : IDL.Text });
+export const PaymentMethod = IDL.Variant({
+  'UPI' : IDL.Null,
+  'creditCard' : IDL.Null,
+  'cash' : IDL.Null,
+  'debitCard' : IDL.Null,
+});
+export const CustomerProfile = IDL.Record({
+  'name' : IDL.Text,
+  'preferredPaymentMethod' : IDL.Opt(PaymentMethod),
+});
 export const VehicleType = IDL.Variant({
   'suv' : IDL.Null,
   'mini' : IDL.Null,
@@ -208,7 +217,16 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'uploadTime' : IDL.Int,
   });
-  const CustomerProfile = IDL.Record({ 'name' : IDL.Text });
+  const PaymentMethod = IDL.Variant({
+    'UPI' : IDL.Null,
+    'creditCard' : IDL.Null,
+    'cash' : IDL.Null,
+    'debitCard' : IDL.Null,
+  });
+  const CustomerProfile = IDL.Record({
+    'name' : IDL.Text,
+    'preferredPaymentMethod' : IDL.Opt(PaymentMethod),
+  });
   const VehicleType = IDL.Variant({
     'suv' : IDL.Null,
     'mini' : IDL.Null,

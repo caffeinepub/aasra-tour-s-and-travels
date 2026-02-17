@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSubmitBooking } from '../hooks/useQueries';
+import { useGetCallerUserProfile } from '../hooks/useCallerProfile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +19,7 @@ import FieldError from '../components/forms/FieldError';
 import StarRating from '../components/forms/StarRating';
 import { CheckCircle2 } from 'lucide-react';
 import type { BookingRequest } from '../backend';
+import { PAYMENT_METHODS } from '../utils/paymentMethods';
 
 interface FormData {
   firstName: string;
@@ -43,6 +45,7 @@ interface FormErrors {
 
 export default function BookCabPage() {
   const submitBooking = useSubmitBooking();
+  const { data: userProfile, isLoading: profileLoading } = useGetCallerUserProfile();
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
     lastName: '',
@@ -62,6 +65,18 @@ export default function BookCabPage() {
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [confirmationId, setConfirmationId] = useState<bigint | null>(null);
+
+  // Initialize payment method from user profile when loaded
+  useEffect(() => {
+    if (userProfile && !profileLoading && !formData.paymentMethod) {
+      if (userProfile.__kind__ === 'customer' && userProfile.customer.preferredPaymentMethod) {
+        setFormData((prev) => ({
+          ...prev,
+          paymentMethod: userProfile.customer.preferredPaymentMethod as string,
+        }));
+      }
+    }
+  }, [userProfile, profileLoading, formData.paymentMethod]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -368,34 +383,18 @@ export default function BookCabPage() {
                         onValueChange={(value) => handleChange('paymentMethod', value)}
                         className="space-y-3"
                       >
-                        <div className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50">
-                          <RadioGroupItem value="cash" id="cash" />
-                          <Label htmlFor="cash" className="flex-1 cursor-pointer font-normal">
-                            <div className="font-medium">Cash</div>
-                            <div className="text-sm text-muted-foreground">Pay with cash to the driver</div>
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50">
-                          <RadioGroupItem value="upi" id="upi" />
-                          <Label htmlFor="upi" className="flex-1 cursor-pointer font-normal">
-                            <div className="font-medium">UPI</div>
-                            <div className="text-sm text-muted-foreground">Pay via UPI (Google Pay, PhonePe, Paytm, etc.)</div>
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50">
-                          <RadioGroupItem value="card" id="card" />
-                          <Label htmlFor="card" className="flex-1 cursor-pointer font-normal">
-                            <div className="font-medium">Credit/Debit Card</div>
-                            <div className="text-sm text-muted-foreground">Pay with your credit or debit card</div>
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50">
-                          <RadioGroupItem value="netbanking" id="netbanking" />
-                          <Label htmlFor="netbanking" className="flex-1 cursor-pointer font-normal">
-                            <div className="font-medium">Net Banking</div>
-                            <div className="text-sm text-muted-foreground">Pay via online banking</div>
-                          </Label>
-                        </div>
+                        {PAYMENT_METHODS.map((method) => (
+                          <div
+                            key={method.value}
+                            className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50"
+                          >
+                            <RadioGroupItem value={method.value} id={method.value} />
+                            <Label htmlFor={method.value} className="flex-1 cursor-pointer font-normal">
+                              <div className="font-medium">{method.label}</div>
+                              <div className="text-sm text-muted-foreground">{method.description}</div>
+                            </Label>
+                          </div>
+                        ))}
                       </RadioGroup>
                       <FieldError error={errors.paymentMethod} />
                     </div>
@@ -403,59 +402,54 @@ export default function BookCabPage() {
 
                   {/* Service Ratings */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Service Ratings</h3>
+                    <h3 className="text-lg font-semibold">Service Ratings (Optional)</h3>
                     <p className="text-sm text-muted-foreground">
-                      If you've used our service before, please rate your experience (optional)
+                      If you've used our services before, please rate your experience
                     </p>
-                    <div className="grid gap-6 sm:grid-cols-2">
+                    <div className="grid gap-4 sm:grid-cols-2">
                       <StarRating
+                        label="Cab Service Rating"
                         id="cabRating"
-                        label="Cab Service Rating (1-5)"
                         value={formData.cabRating}
-                        onChange={(rating) => handleChange('cabRating', rating)}
+                        onChange={(value) => handleChange('cabRating', value)}
                         error={errors.cabRating}
                       />
                       <StarRating
+                        label="Driver Service Rating"
                         id="driverRating"
-                        label="Driver Service Rating (1-5)"
                         value={formData.driverRating}
-                        onChange={(rating) => handleChange('driverRating', rating)}
+                        onChange={(value) => handleChange('driverRating', value)}
                         error={errors.driverRating}
                       />
                     </div>
                   </div>
 
-                  {/* Additional Information */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Additional Information</h3>
-                    <div className="space-y-2">
-                      <Label htmlFor="comments">Special Requests or Comments</Label>
-                      <Textarea
-                        id="comments"
-                        value={formData.comments}
-                        onChange={(e) => handleChange('comments', e.target.value)}
-                        placeholder="Any special requirements, luggage details, or additional information..."
-                        rows={4}
-                      />
-                    </div>
+                  {/* Additional Comments */}
+                  <div className="space-y-2">
+                    <Label htmlFor="comments">Additional Comments</Label>
+                    <Textarea
+                      id="comments"
+                      value={formData.comments}
+                      onChange={(e) => handleChange('comments', e.target.value)}
+                      placeholder="Any special requests or additional information..."
+                      rows={4}
+                    />
                   </div>
 
                   {/* Submit Button */}
-                  <div className="flex justify-end gap-4">
-                    <Button
-                      type="submit"
-                      size="lg"
-                      disabled={submitBooking.isPending}
-                      className="min-w-[200px]"
-                    >
-                      {submitBooking.isPending ? 'Submitting...' : 'Submit Booking'}
-                    </Button>
-                  </div>
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full"
+                    disabled={submitBooking.isPending}
+                  >
+                    {submitBooking.isPending ? 'Submitting...' : 'Submit Booking'}
+                  </Button>
 
                   {submitBooking.isError && (
                     <Alert variant="destructive">
                       <AlertDescription>
-                        Failed to submit booking. Please try again or contact support.
+                        Failed to submit booking. Please try again.
                       </AlertDescription>
                     </Alert>
                   )}

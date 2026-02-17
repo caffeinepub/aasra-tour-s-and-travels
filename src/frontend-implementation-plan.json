@@ -1,90 +1,47 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Add authenticated Profile area with referrals and attachments (frontend)",
+  "title": "Aasra Cab Portal — Saved payment method in profile and defaulted on booking form",
   "requirements": [
     {
-      "id": "REQ-5",
-      "summary": "Add an authenticated Profile area where users can view/edit profile basics, manage referral code/balances, apply a referral code once, and upload/manage cab/driver attachments.",
+      "id": "REQ-2",
+      "summary": "Add a Payment Method section on the authenticated Profile page to select and save a preferred payment method via existing profile save flow.",
       "acceptanceCriteria": [
-        "A new route is available (e.g., \"/profile\") and is only accessible to authenticated users; unauthenticated users are prompted to log in.",
-        "The Profile UI shows: user name, referral code, referral status (whether a referrer is set), and current bonus balances for customer and driver.",
-        "The Profile UI includes a form to apply a referral code; once applied successfully, the input is disabled and the applied referrer is shown.",
-        "The Profile UI allows uploading a cab attachment and a driver attachment; after upload, metadata is displayed (filename/content type) and downloading/viewing is possible for the user.",
-        "All user-facing text is in English and uses the existing UI component patterns (shadcn components, Tailwind styling)."
+        "Profile page displays the currently saved preferred payment method (or shows it as not set).",
+        "User can select a preferred payment method and save it using existing profile save flow and React Query invalidation/refetch patterns.",
+        "User-facing text is in English."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/ProfilePage.tsx",
+          "path": "frontend/src/utils/paymentMethods.ts",
           "operation": "create",
-          "description": "Create the authenticated Profile page UI using shadcn-ui components (cards/forms/alerts/buttons/inputs) and Tailwind styling to: show/edit profile basics (name + driver/customer designation when supported by backend bindings), show referral code and referral status, show customer/driver bonus balances, allow applying a referral code once (disable after success), and upload/manage cab and driver attachments (show metadata and provide view/download via ExternalBlob direct URL/bytes). Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/AuthRequiredScreen.tsx",
-          "operation": "create",
-          "description": "Add a reusable authenticated-only guard screen (English text) that prompts unauthenticated users to log in, reusing existing alert patterns and the existing LoginButton component."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Wire the new /profile route into the TanStack Router route tree and point it at ProfilePage (ensure it is navigable and not orphaned)."
-        },
-        {
-          "path": "frontend/src/components/ProfileSetupDialog.tsx",
-          "operation": "modify",
-          "description": "Update initial profile setup flow to save a valid UserProfile shape (e.g., default customer profile with name) while preserving current behavior of asking for and saving name only once."
-        },
-        {
-          "path": "frontend/src/hooks/useCallerProfile.ts",
-          "operation": "modify",
-          "description": "Update caller profile hooks to align with the updated UserProfile type (customer/driver variants), including helpers to read/write the display name while preserving existing query key behavior."
-        }
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "summary": "Add authenticated-only navigation entry points to the Profile area on desktop and mobile menus while preserving the existing admin-only navigation rule.",
-      "acceptanceCriteria": [
-        "When a user is authenticated, the header shows a \"Profile\" link in both desktop and mobile navigation; when not authenticated, it does not show.",
-        "The existing rule for showing \"Admin\" only to authenticated admin users remains unchanged.",
-        "Navigation changes do not modify any frontend immutable paths listed by the system constraints."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/SiteHeader.tsx",
-          "operation": "modify",
-          "description": "Add a \"Profile\" navigation link to /profile in both desktop and mobile menus, shown only when authenticated (using existing useAdminGuard isAuthenticated) while keeping the existing admin-only link logic unchanged."
-        }
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "summary": "Add React Query hooks and frontend type alignment for new profile/referral/attachment capabilities with stable caching and UI-visible errors.",
-      "acceptanceCriteria": [
-        "All new backend methods are reachable through the generated frontend backend bindings (types compile in TypeScript).",
-        "Profile/referral/attachment queries are cached with stable query keys and are invalidated/refetched on successful mutations.",
-        "Errors from backend calls are surfaced in the UI using existing alert/error patterns (English messages)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useReferral.ts",
-          "operation": "create",
-          "description": "Create React Query hooks for referral capabilities (fetch stable referral code, fetch referral info/balances, apply referral code once) with stable query keys and mutation-driven invalidation; surface backend errors to the Profile UI using existing alert patterns."
-        },
-        {
-          "path": "frontend/src/hooks/useAttachments.ts",
-          "operation": "create",
-          "description": "Create React Query hooks for cab/driver attachments: fetch attachment metadata for caller, upload/replace attachment using blob-storage ExternalBlob (including optional upload progress), and refetch/invalidate on success. Use the blob-storage ExternalBlob capability to support direct URL viewing/downloading. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/admin/AdminBookingsPage.tsx",
-          "operation": "modify",
-          "description": "Adjust any profile name reads to handle the updated UserProfile variant shape so TypeScript compiles and existing admin UI continues to display a caller name when available."
+          "description": "Add a shared, non-sensitive list of supported payment method values and English labels (e.g., Cash, UPI, Credit Card, Debit Card) to be reused by Profile and Booking UI to stay consistent."
         },
         {
           "path": "frontend/src/pages/ProfilePage.tsx",
           "operation": "modify",
-          "description": "Integrate the new referral and attachment hooks into the Profile UI, including query invalidation after mutations (apply referral code, upload attachments, save profile) and displaying backend errors via existing shadcn alert/error patterns in English."
+          "description": "Add a \"Payment Method\" section to the Profile page UI. Use shadcn-ui form building blocks (e.g., Card/Label/Select or RadioGroup) to let the user choose a preferred payment method from the shared list, show the currently saved value or \"Not set\", and persist it by extending the existing saveCallerUserProfile mutation payload (while keeping the existing React Query invalidation/refetch behavior). Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Preselect the booking form payment method from the signed-in user’s saved preferred payment method when available, while still allowing edits before submit.",
+      "acceptanceCriteria": [
+        "If the caller has a preferred payment method saved, Book a Cab page initializes the payment method radio group to that value.",
+        "If no preferred payment method is saved, the payment method starts blank and the existing validation continues to require selection.",
+        "Submitting a booking continues to store the chosen paymentMethod on the BookingRequest exactly as selected on the form."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/BookCabPage.tsx",
+          "operation": "modify",
+          "description": "Fetch the caller profile via the existing useGetCallerUserProfile hook and, once loaded, initialize the booking form payment method to the saved preferred payment method only when the form value is still blank (so user changes are preserved). Update the payment method RadioGroup options to use the shared payment-method list values/labels, and ensure submission continues to pass bookingRequest.paymentMethod exactly as the currently selected form value. Use the shadcn-ui RadioGroup component already present. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/utils/paymentMethods.ts",
+          "operation": "modify",
+          "description": "Ensure the shared payment method list includes all values used by the booking form RadioGroup so profile preference can be applied directly without value mapping."
         }
       ]
     }
