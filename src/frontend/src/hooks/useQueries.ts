@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { BookingRequest } from '../backend';
+import type { BookingRequest, RateCard } from '../backend';
+import { Principal } from '@icp-sdk/core/principal';
 
 export function useGetAllBookings() {
   const { actor, isFetching } = useActor();
@@ -39,6 +40,38 @@ export function useSubmitBooking() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+    },
+  });
+}
+
+export function useAssignDriver() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ bookingId, driverPrincipal }: { bookingId: bigint; driverPrincipal: Principal }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.assignDriver(bookingId, driverPrincipal);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['booking', variables.bookingId.toString()] });
+    },
+  });
+}
+
+export function useUpdateBookingStatus() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ bookingId, status }: { bookingId: bigint; status: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.updateBookingStatus(bookingId, status);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['booking', variables.bookingId.toString()] });
     },
   });
 }

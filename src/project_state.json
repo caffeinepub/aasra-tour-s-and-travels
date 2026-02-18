@@ -7,18 +7,18 @@
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-add-a-payment-method-section-to-the-authenticated-user-profile-page-that-allows-the-user-to-select-and-save-a-preferred-payment-method-e-g-cash-upi-credit-debit-card-net-banking",
-      "title": "Add a \"Payment Method\" section to the authenticated user Profile page that allows the user to select and save a preferred payment method (e.g., Cash, UPI, Credit/Debit Card, Net Banking).",
+      "id": "feature-add-a-new-domain-setup-page-that-explains-in-english-how-to-buy-a-domain-from-any-registrar-and-configure-dns-to-point-the-domain-to-this-internet-computer-app-include-step-by-step-instructions-and-clearly-state-that-domain-purchase-happens-outside-the-app",
+      "title": "Add a new “Domain Setup” page that explains (in English) how to buy a domain from any registrar and configure DNS to point the domain to this Internet Computer app (include step-by-step instructions and clearly state that domain purchase happens outside the app).",
       "reqIds": [
-        "REQ-2"
+        "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-when-a-signed-in-user-opens-the-booking-form-preselect-the-booking-payment-method-to-the-user-s-saved-preferred-payment-method-when-available-while-still-allowing-the-user-to-change-it-before-submitting",
-      "title": "When a signed-in user opens the booking form, preselect the booking payment method to the user’s saved preferred payment method (when available) while still allowing the user to change it before submitting.",
+      "id": "feature-add-navigation-access-to-the-new-domain-setup-page-from-the-existing-site-navigation-add-a-link-in-the-footer-support-or-quick-links-section",
+      "title": "Add navigation access to the new “Domain Setup” page from the existing site navigation (add a link in the footer Support or Quick Links section).",
       "reqIds": [
-        "REQ-3"
+        "REQ-2"
       ],
       "version": 1
     }
@@ -26,26 +26,11 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add a photo gallery feature",
+      "summary": "Purchase a domain for the project",
       "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Add a payment method feature",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "Extend the backend user profile model to store an optional preferred payment method for the authenticated user, and expose it through the existing profile get/save APIs.",
-      "reqIds": [
-        "REQ-1"
-      ],
       "status": "pending"
     }
   ],
-  "gameProjectType": "none",
   "projectName": "Aasra Cab Portal",
   "clarification_mode": "instant",
   "clarification_rounds": 0

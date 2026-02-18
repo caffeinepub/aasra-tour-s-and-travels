@@ -27,7 +27,9 @@ export interface BookingRequest {
   'cab_rating' : [] | [bigint],
   'cancel_reason' : [] | [string],
   'email' : string,
+  'driver_location' : [] | [Location],
   'pickup_time' : bigint,
+  'assigned_driver' : [] | [Principal],
   'first_name' : string,
   'last_name' : string,
   'comments' : string,
@@ -52,6 +54,7 @@ export interface DriverProfile {
   'yearOfManufacture' : bigint,
 }
 export type ExternalBlob = Uint8Array;
+export interface Location { 'latitude' : number, 'longitude' : number }
 export type PaymentMethod = { 'UPI' : null } |
   { 'creditCard' : null } |
   { 'cash' : null } |
@@ -105,6 +108,7 @@ export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'applyReferralCode' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'assignDriver' : ActorMethod<[bigint, Principal], undefined>,
   'awardReferralBonuses' : ActorMethod<[bigint, bigint, bigint], undefined>,
   'generateReferralCode' : ActorMethod<[], string>,
   'getAllBookings' : ActorMethod<[], Array<BookingRequest>>,
@@ -119,12 +123,15 @@ export interface _SERVICE {
   >,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getDriverLocation' : ActorMethod<[bigint], [] | [Location]>,
   'getRateCard' : ActorMethod<[], RateCard>,
   'getReferralBonus' : ActorMethod<[], [] | [ReferralBonus]>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'submitBooking' : ActorMethod<[BookingRequest], bigint>,
+  'updateBookingStatus' : ActorMethod<[bigint, string], undefined>,
+  'updateDriverLocation' : ActorMethod<[bigint, Location], undefined>,
   'updateRateCard' : ActorMethod<[RateCard], undefined>,
   'uploadAttachment' : ActorMethod<
     [{ 'cab' : null } | { 'driver' : null }, ExternalBlob, string, string],

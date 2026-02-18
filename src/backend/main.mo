@@ -10,10 +10,10 @@ import Order "mo:core/Order";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import Storage "blob-storage/Storage";
-import Migration "migration";
 import MixinStorage "blob-storage/Mixin";
 
-(with migration = Migration.run)
+
+
 actor {
   include MixinStorage();
   public type UserRole = AccessControl.UserRole;
@@ -185,6 +185,8 @@ actor {
     submit_time : Int;
     driver_rating : ?Nat;
     cab_rating : ?Nat;
+    assigned_driver : ?Principal;
+    driver_location : ?Location;
   };
 
   module BookingRequest {
@@ -257,6 +259,8 @@ actor {
       submit_time = form.submit_time;
       driver_rating = form.driver_rating;
       cab_rating = form.cab_rating;
+      assigned_driver = null;
+      driver_location = null;
     };
     bookingRequests.add(id, booking);
     nextBookingId += 1;
@@ -279,6 +283,100 @@ actor {
         booking;
       };
       case (null) { Runtime.trap("Booking request not found for id " # id.toText()) };
+    };
+  };
+
+  // Admin assign driver
+  public shared ({ caller }) func assignDriver(bookingId : Nat, driver : Principal) : async () {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can assign drivers");
+    };
+
+    // Verify that the assigned principal has a driver profile
+    switch (userProfiles.get(driver)) {
+      case (?profile) {
+        switch (profile) {
+          case (#driver(_)) {
+            // Valid driver profile, proceed with assignment
+          };
+          case (#customer(_)) {
+            Runtime.trap("Unauthorized: Cannot assign a customer as a driver");
+          };
+        };
+      };
+      case (null) {
+        Runtime.trap("Unauthorized: Cannot assign a user without a driver profile");
+      };
+    };
+
+    switch (bookingRequests.get(bookingId)) {
+      case (?booking) {
+        let updatedBooking = {
+          booking with
+          status = #accepted;
+          assigned_driver = ?driver;
+        };
+        bookingRequests.add(bookingId, updatedBooking);
+      };
+      case (null) { Runtime.trap("Booking request not found for id " # bookingId.toText()) };
+    };
+  };
+
+  public type Location = {
+    latitude : Float;
+    longitude : Float;
+  };
+
+  // Driver location update
+  public shared ({ caller }) func updateDriverLocation(bookingId : Nat, location : Location) : async () {
+    switch (bookingRequests.get(bookingId)) {
+      case (?booking) {
+        // Allow assigned driver or admin to update location
+        if (booking.assigned_driver == ?caller or AccessControl.isAdmin(accessControlState, caller)) {
+          let updatedBooking = {
+            booking with
+            driver_location = ?location;
+          };
+          bookingRequests.add(bookingId, updatedBooking);
+        } else {
+          Runtime.trap("Unauthorized: Only the assigned driver or admin can update driver location");
+        };
+      };
+      case (null) { Runtime.trap("Booking not found for id " # bookingId.toText()) };
+    };
+  };
+
+  // Get driver location
+  public query ({ caller }) func getDriverLocation(bookingId : Nat) : async ?Location {
+    switch (bookingRequests.get(bookingId)) {
+      case (?booking) {
+        // Allow customer, assigned driver, or admin to view location
+        if (caller == booking.submitted_by or booking.assigned_driver == ?caller or AccessControl.isAdmin(accessControlState, caller)) {
+          booking.driver_location;
+        } else {
+          Runtime.trap("Unauthorized: Only the booking customer, assigned driver, or admin can view driver location");
+        };
+      };
+      case (null) { Runtime.trap("Booking not found for id " # bookingId.toText()) };
+    };
+  };
+
+  // Change booking status
+  public shared ({ caller }) func updateBookingStatus(bookingId : Nat, statusText : Text) : async () {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can update booking status");
+    };
+
+    switch (bookingRequests.get(bookingId)) {
+      case (?booking) {
+        let newStatus = BookingStatus.fromText(statusText);
+        let updatedBooking = {
+          booking with
+          status = newStatus;
+        };
+        bookingRequests.add(bookingId, updatedBooking);
+      };
+      case (null) { Runtime.trap("Booking not found for id " # bookingId.toText()) };
     };
   };
 

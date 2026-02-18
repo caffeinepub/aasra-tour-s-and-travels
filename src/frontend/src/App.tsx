@@ -12,6 +12,9 @@ import ContactPage from './pages/ContactPage';
 import BookCabPage from './pages/BookCabPage';
 import AdminBookingsPage from './pages/admin/AdminBookingsPage';
 import ProfilePage from './pages/ProfilePage';
+import TrackingPage from './pages/TrackingPage';
+import DriverLocationUpdatePage from './pages/DriverLocationUpdatePage';
+import DomainSetupPage from './pages/DomainSetupPage';
 
 const rootRoute = createRootRoute({
   component: SiteLayout,
@@ -83,6 +86,24 @@ const profileRoute = createRoute({
   component: ProfilePage,
 });
 
+const trackingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/track/$bookingId',
+  component: TrackingPage,
+});
+
+const driverLocationRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/driver/track/$bookingId',
+  component: DriverLocationUpdatePage,
+});
+
+const domainSetupRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/domain-setup',
+  component: DomainSetupPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   aboutRoute,
@@ -95,6 +116,9 @@ const routeTree = rootRoute.addChildren([
   bookCabRoute,
   adminRoute,
   profileRoute,
+  trackingRoute,
+  driverLocationRoute,
+  domainSetupRoute,
 ]);
 
 const router = createRouter({ routeTree });

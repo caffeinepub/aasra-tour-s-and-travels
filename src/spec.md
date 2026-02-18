@@ -1,11 +1,10 @@
 # Specification
 
 ## Summary
-**Goal:** Allow users to save a preferred payment method in their profile and have it preselected when booking a cab.
+**Goal:** Provide an in-app guide for purchasing a domain externally and configuring DNS to point a custom domain to the Aasra Cab Portal Internet Computer app.
 
 **Planned changes:**
-- Extend the backend user profile model to store an optional preferred payment method and return/save it via existing profile get/save APIs (including any needed safe migration defaulting to null/empty).
-- Add a “Payment Method” section to the Profile page to view, select, and save the preferred payment method (English UI text) using the existing profile save + refetch patterns.
-- Update the booking form to initialize the payment method selection from the saved preferred payment method when available, while still allowing changes before submit and preserving existing validation when not set.
+- Add a new “Domain Setup” page/route (e.g., `/domain-setup`) containing an English, step-by-step guide for buying a domain from any registrar and configuring DNS, including a clear note that domain purchase happens outside the app.
+- Add a “Domain Setup” link in the footer navigation (Support or Quick Links) that routes to the new page via client-side navigation and matches existing UI styling (Tailwind + shadcn).
 
-**User-visible outcome:** Signed-in users can set a preferred payment method in their profile, and the booking form will auto-select it (if saved) while still letting them choose a different method before submitting.
+**User-visible outcome:** Users can open a new Domain Setup page from the footer to read clear English instructions for buying a domain elsewhere and setting DNS to connect it to the app.

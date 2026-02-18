@@ -1,47 +1,42 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Aasra Cab Portal — Saved payment method in profile and defaulted on booking form",
+  "title": "Add Domain Setup Guide Page + Footer Link",
   "requirements": [
     {
-      "id": "REQ-2",
-      "summary": "Add a Payment Method section on the authenticated Profile page to select and save a preferred payment method via existing profile save flow.",
+      "id": "REQ-1",
+      "summary": "Create a new Domain Setup guide page describing external domain purchase and DNS configuration for pointing a custom domain to the Internet Computer app.",
       "acceptanceCriteria": [
-        "Profile page displays the currently saved preferred payment method (or shows it as not set).",
-        "User can select a preferred payment method and save it using existing profile save flow and React Query invalidation/refetch patterns.",
-        "User-facing text is in English."
+        "A new route is available (e.g., \"/domain-setup\") that renders a Domain Setup guide page.",
+        "The page content includes: (1) buy domain instructions, (2) DNS configuration steps, and (3) a clear note that the app cannot directly purchase domains.",
+        "All user-facing copy on the page is in English.",
+        "The page uses existing UI components/styling conventions (Tailwind + shadcn) and is readable on mobile and desktop."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/utils/paymentMethods.ts",
+          "path": "frontend/src/pages/DomainSetupPage.tsx",
           "operation": "create",
-          "description": "Add a shared, non-sensitive list of supported payment method values and English labels (e.g., Cash, UPI, Credit Card, Debit Card) to be reused by Profile and Booking UI to stay consistent."
+          "description": "Add a new Domain Setup guide page in English with step-by-step sections for (1) purchasing a domain via any registrar (explicitly stating purchase/billing happen outside the app), and (2) configuring DNS records to point the domain to the deployed Internet Computer app (include practical steps, common record types, and verification tips). Use existing Tailwind styling conventions and compose shadcn-ui components (e.g., Card/Accordion/Alert) to keep content scannable and mobile-friendly. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/pages/ProfilePage.tsx",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Add a \"Payment Method\" section to the Profile page UI. Use shadcn-ui form building blocks (e.g., Card/Label/Select or RadioGroup) to let the user choose a preferred payment method from the shared list, show the currently saved value or \"Not set\", and persist it by extending the existing saveCallerUserProfile mutation payload (while keeping the existing React Query invalidation/refetch behavior). Verify the component's usage instructions before implementing."
+          "description": "Wire the new Domain Setup page into TanStack Router by importing the page component and adding a \"/domain-setup\" route to the route tree so it is navigable without a full page reload."
         }
       ]
     },
     {
-      "id": "REQ-3",
-      "summary": "Preselect the booking form payment method from the signed-in user’s saved preferred payment method when available, while still allowing edits before submit.",
+      "id": "REQ-2",
+      "summary": "Add a footer navigation link to the Domain Setup page.",
       "acceptanceCriteria": [
-        "If the caller has a preferred payment method saved, Book a Cab page initializes the payment method radio group to that value.",
-        "If no preferred payment method is saved, the payment method starts blank and the existing validation continues to require selection.",
-        "Submitting a booking continues to store the chosen paymentMethod on the BookingRequest exactly as selected on the form."
+        "The footer includes a visible “Domain Setup” link.",
+        "Clicking the link navigates to the Domain Setup page without a full page reload."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/BookCabPage.tsx",
+          "path": "frontend/src/components/SiteFooter.tsx",
           "operation": "modify",
-          "description": "Fetch the caller profile via the existing useGetCallerUserProfile hook and, once loaded, initialize the booking form payment method to the saved preferred payment method only when the form value is still blank (so user changes are preserved). Update the payment method RadioGroup options to use the shared payment-method list values/labels, and ensure submission continues to pass bookingRequest.paymentMethod exactly as the currently selected form value. Use the shadcn-ui RadioGroup component already present. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/utils/paymentMethods.ts",
-          "operation": "modify",
-          "description": "Ensure the shared payment method list includes all values used by the booking form RadioGroup so profile preference can be applied directly without value mapping."
+          "description": "Add a visible \"Domain Setup\" Link (TanStack Router Link) in the footer under the Support or Quick Links list, pointing to \"/domain-setup\", matching existing styling and hover/active behaviors. Verify the component's usage instructions before implementing."
         }
       ]
     }

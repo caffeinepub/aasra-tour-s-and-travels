@@ -1,77 +1,67 @@
 {
   "kind": "build_request",
-  "title": "Add saved payment method to user profile and default it in bookings",
+  "title": "Add Domain Purchase & Custom Domain Setup Guide",
   "projectName": "Aasra Cab Portal",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Extend the backend user profile model to store an optional preferred payment method for the authenticated user, and expose it through the existing profile get/save APIs.",
-      "target": "backend",
+      "text": "Add a new “Domain Setup” page that explains (in English) how to buy a domain from any registrar and configure DNS to point the domain to this Internet Computer app (include step-by-step instructions and clearly state that domain purchase happens outside the app).",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-user-Add-payment-method"
+          "msg-1"
         ],
         "quotes": [
-          "Add payment method"
+          "Buy domain"
         ]
       },
       "acceptanceCriteria": [
-        "Backend UserProfile data can persist an optional preferred payment method for both customer and driver variants (or a shared place if modeled that way).",
-        "Existing getCallerUserProfile/getUserProfile responses include the saved preferred payment method when set.",
-        "saveCallerUserProfile persists updates to the preferred payment method.",
-        "If an upgrade/migration is required for existing deployed state, migration sets the new field to null/empty without breaking existing profiles."
+        "A new route is available (e.g., \"/domain-setup\") that renders a Domain Setup guide page.",
+        "The page content includes: (1) buy domain instructions, (2) DNS configuration steps, and (3) a clear note that the app cannot directly purchase domains.",
+        "All user-facing copy on the page is in English.",
+        "The page uses existing UI components/styling conventions (Tailwind + shadcn) and is readable on mobile and desktop."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add a \"Payment Method\" section to the authenticated user Profile page that allows the user to select and save a preferred payment method (e.g., Cash, UPI, Credit/Debit Card, Net Banking).",
+      "text": "Add navigation access to the new “Domain Setup” page from the existing site navigation (add a link in the footer Support or Quick Links section).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-user-Add-payment-method"
+          "msg-1"
         ],
         "quotes": [
-          "Add payment method"
+          "Buy domain"
         ]
       },
       "acceptanceCriteria": [
-        "Profile page displays the currently saved preferred payment method (or shows it as not set).",
-        "User can select a preferred payment method and save it using existing profile save flow and React Query invalidation/refetch patterns.",
-        "User-facing text is in English."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "When a signed-in user opens the booking form, preselect the booking payment method to the user’s saved preferred payment method (when available) while still allowing the user to change it before submitting.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-user-Add-payment-method"
-        ],
-        "quotes": [
-          "Add payment method"
-        ]
-      },
-      "acceptanceCriteria": [
-        "If the caller has a preferred payment method saved, Book a Cab page initializes the payment method radio group to that value.",
-        "If no preferred payment method is saved, the payment method starts blank and the existing validation continues to require selection.",
-        "Submitting a booking continues to store the chosen paymentMethod on the BookingRequest exactly as selected on the form."
+        "The footer includes a visible “Domain Setup” link.",
+        "Clicking the link navigates to the Domain Setup page without a full page reload."
       ]
     }
   ],
   "constraints": [
-    "Do not integrate third-party payment processing or external databases/services for this change.",
-    "Do not collect or store sensitive card data (PAN, CVV, full card number); payment method should be stored as a simple non-sensitive enum/string selection.",
-    "Respect the single-actor Motoko backend architecture (all logic in backend/main.mo); only add backend/migration.mo changes if a state upgrade is needed."
+    "Do not attempt to programmatically purchase a domain; domain registration and billing must be handled externally (outside the app).",
+    "Do not edit files under frontend/src/components/ui (read-only components must be composed, not modified).",
+    "Do not edit any paths listed in frontend.immutablePaths (use composition/wrappers instead)."
   ],
   "nonGoals": [
-    "Processing real payments, charging customers, refunds, or payment confirmations.",
-    "Stripe or other payment gateway integration.",
-    "Storing multiple saved cards/bank accounts or billing addresses."
+    "Implementing a registrar API integration for domain purchase.",
+    "Automated DNS changes or certificate management from within the app."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

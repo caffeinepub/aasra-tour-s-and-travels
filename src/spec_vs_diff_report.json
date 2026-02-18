@@ -1,44 +1,33 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T19:16:44.488Z",
-  "summary": "Implemented a preferred payment method field for customer profiles in the Motoko backend (with migration) and added frontend utilities plus logic to initialize booking form payment method from the saved preference. However, support is not clearly implemented for driver profiles, and the Profile page UI for selecting/saving the payment method is not evidenced in the provided diff excerpt.",
+  "generatedAt": "2026-02-18T04:22:39.216Z",
+  "summary": "A new /domain-setup route and page were added, and the footer now includes a Domain Setup link using TanStack Router navigation. The Domain Setup page content is partially visible in the diff; DNS configuration section is present but truncated, so full step-by-step DNS guidance cannot be fully verified from the provided excerpt. An unrelated project_state.json entry suggests a feature request to purchase a domain, which conflicts with the stated non-goals.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Backend UserProfile data can persist an optional preferred payment method for both customer and driver variants (or a shared place if modeled that way).",
-      "reason": "The diff shows `preferredPaymentMethod` added only to `CustomerProfile`; `DriverProfile` does not include it, and the migration only populates it for the customer variant.",
+      "requirement": "The Domain Setup page content includes step-by-step DNS configuration instructions (and the full guide requirements).",
+      "reason": "The added DomainSetupPage.tsx is truncated; while it clearly includes an external-purchase notice and a 'Configure DNS Records' section header, the actual DNS steps and complete step-by-step instructions cannot be confirmed from the provided diff excerpt.",
       "evidence": [
-        "backend/main.mo",
-        "backend/migration.mo"
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "requirement": "Add a \"Payment Method\" section to the authenticated user Profile page that allows the user to select and save a preferred payment method.",
-      "reason": "The ProfilePage diff excerpt shows state/handlers for `paymentMethod` and saving it for customers, but the actual UI section (radio group/controls, display of current value) is not visible in the provided truncated content, so implementation cannot be confirmed from the diff summary alone.",
-      "evidence": [
-        "frontend/src/pages/ProfilePage.tsx (truncated)"
+        "frontend/src/pages/DomainSetupPage.tsx (truncated, DNS section begins but is cut off)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Added backend helper `PaymentMethod.fromText` that parses a Text value into the PaymentMethod variant and traps on unsupported values.",
-      "reason": "The BuildRequest only requires storing/exposing the preferred payment method via existing profile APIs; it does not request text parsing utilities or trap-based validation helpers.",
+      "description": "Tracking a new feature request to 'Purchase a domain for the project' (AR-1) in project_state.json.",
+      "reason": "The BuildRequest explicitly states domain purchase must be handled externally and lists registrar API integration as a non-goal; adding an explicit feature request to purchase a domain was not requested.",
       "evidence": [
-        "backend/main.mo"
+        "project_state.json (new_feature_requests includes AR-1: \"Purchase a domain for the project\")"
       ]
     }
   ],
   "confidence": 0.66,
   "changed_files": [
-    "backend/main.mo",
-    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/pages/BookCabPage.tsx",
-    "frontend/src/pages/ProfilePage.tsx",
-    "frontend/src/utils/paymentMethods.ts",
+    "frontend/src/App.tsx",
+    "frontend/src/components/SiteFooter.tsx",
+    "frontend/src/pages/DomainSetupPage.tsx",
     "project_state.json"
   ]
 }

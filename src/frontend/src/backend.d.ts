@@ -14,6 +14,10 @@ export class ExternalBlob {
     static fromBytes(blob: Uint8Array<ArrayBuffer>): ExternalBlob;
     withUploadProgress(onProgress: (percentage: number) => void): ExternalBlob;
 }
+export interface Location {
+    latitude: number;
+    longitude: number;
+}
 export interface CustomerProfile {
     name: string;
     preferredPaymentMethod?: PaymentMethod;
@@ -35,7 +39,9 @@ export interface BookingRequest {
     cab_rating?: bigint;
     cancel_reason?: string;
     email: string;
+    driver_location?: Location;
     pickup_time: bigint;
+    assigned_driver?: Principal;
     first_name: string;
     last_name: string;
     comments: string;
@@ -98,6 +104,7 @@ export enum VehicleType {
 export interface backendInterface {
     applyReferralCode(code: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    assignDriver(bookingId: bigint, driver: Principal): Promise<void>;
     awardReferralBonuses(bookingId: bigint, customerBonus: bigint, driverBonus: bigint): Promise<void>;
     generateReferralCode(): Promise<string>;
     getAllBookings(): Promise<Array<BookingRequest>>;
@@ -106,12 +113,15 @@ export interface backendInterface {
     getCallerAttachment(attachmentType: Variant_cab_driver): Promise<Attachment | null>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getDriverLocation(bookingId: bigint): Promise<Location | null>;
     getRateCard(): Promise<RateCard>;
     getReferralBonus(): Promise<ReferralBonus | null>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     submitBooking(form: BookingRequest): Promise<bigint>;
+    updateBookingStatus(bookingId: bigint, statusText: string): Promise<void>;
+    updateDriverLocation(bookingId: bigint, location: Location): Promise<void>;
     updateRateCard(newRateCard: RateCard): Promise<void>;
     uploadAttachment(attachmentType: Variant_cab_driver, file: ExternalBlob, name: string, contentType: string): Promise<void>;
 }

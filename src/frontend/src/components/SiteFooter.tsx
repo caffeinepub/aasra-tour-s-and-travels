@@ -100,6 +100,14 @@ export default function SiteFooter() {
                   Book a Cab
                 </Link>
               </li>
+              <li>
+                <Link
+                  to="/domain-setup"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Domain Setup
+                </Link>
+              </li>
             </ul>
           </div>
 
