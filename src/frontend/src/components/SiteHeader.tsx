@@ -1,5 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router';
-import { Menu, X } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -31,15 +31,15 @@ export default function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
-        <div className="flex h-20 items-center justify-between">
+        <div className="flex h-16 items-center justify-between sm:h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-2 sm:gap-3">
             <img
               src="/assets/generated/aasra-logo.dim_512x512.png"
               alt="Aasra tour's and travels logo"
-              className="h-12 w-12 object-contain"
+              className="h-10 w-10 object-contain sm:h-12 sm:w-12"
             />
-            <span className="text-xl font-bold text-foreground">
+            <span className="text-base font-bold text-foreground sm:text-xl">
               Aasra tour's and travels
             </span>
           </Link>
@@ -95,12 +95,12 @@ export default function SiteHeader() {
           {/* Mobile Menu */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild className="lg:hidden">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="h-11 w-11">
                 <Menu className="h-6 w-6" />
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+            <SheetContent side="right" className="w-[280px] sm:w-[350px]">
               <div className="flex flex-col gap-6 py-6">
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-bold">Menu</span>
@@ -111,7 +111,7 @@ export default function SiteHeader() {
                       key={link.path}
                       to={link.path}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="text-base font-medium text-muted-foreground transition-colors hover:text-foreground"
+                      className="text-base font-medium text-muted-foreground transition-colors hover:text-foreground active:text-foreground"
                       activeProps={{ className: 'text-foreground' }}
                     >
                       {link.label}
@@ -121,7 +121,7 @@ export default function SiteHeader() {
                     <Link
                       to="/profile"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="text-base font-medium text-muted-foreground transition-colors hover:text-foreground"
+                      className="text-base font-medium text-muted-foreground transition-colors hover:text-foreground active:text-foreground"
                       activeProps={{ className: 'text-foreground' }}
                     >
                       Profile
@@ -131,7 +131,7 @@ export default function SiteHeader() {
                     <Link
                       to="/admin"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="text-base font-medium text-muted-foreground transition-colors hover:text-foreground"
+                      className="text-base font-medium text-muted-foreground transition-colors hover:text-foreground active:text-foreground"
                       activeProps={{ className: 'text-foreground' }}
                     >
                       Admin

@@ -178,17 +178,17 @@ export default function BookCabPage() {
   if (confirmationId !== null) {
     return (
       <div className="flex flex-col">
-        <section className="py-20">
+        <section className="py-12 sm:py-16 lg:py-20">
           <div className="container mx-auto px-4">
             <div className="mx-auto max-w-2xl">
               <Alert className="border-primary bg-primary/5">
                 <CheckCircle2 className="h-5 w-5 text-primary" />
-                <AlertTitle className="text-xl font-bold">Booking Confirmed!</AlertTitle>
+                <AlertTitle className="text-lg font-bold sm:text-xl">Booking Confirmed!</AlertTitle>
                 <AlertDescription className="mt-2 space-y-2">
                   <p>
                     Thank you for choosing Aasra tour's and travels. Your booking has been successfully submitted.
                   </p>
-                  <p className="text-lg font-semibold">
+                  <p className="text-base font-semibold sm:text-lg">
                     Confirmation Reference: <span className="text-primary">#{confirmationId.toString()}</span>
                   </p>
                   <p className="text-sm text-muted-foreground">
@@ -211,11 +211,11 @@ export default function BookCabPage() {
   return (
     <div className="flex flex-col">
       {/* Hero */}
-      <section className="bg-gradient-to-br from-amber-50 to-orange-50 py-12 dark:from-amber-950/20 dark:to-orange-950/20">
+      <section className="bg-gradient-to-br from-amber-50 to-orange-50 py-8 dark:from-amber-950/20 dark:to-orange-950/20 sm:py-12">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-3xl text-center">
-            <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl">Book a Cab</h1>
-            <p className="text-lg text-muted-foreground">
+            <h1 className="mb-3 text-3xl font-bold tracking-tight sm:mb-4 sm:text-4xl lg:text-5xl">Book a Cab</h1>
+            <p className="text-base text-muted-foreground sm:text-lg">
               Fill in your details and we'll get back to you shortly
             </p>
           </div>
@@ -223,7 +223,7 @@ export default function BookCabPage() {
       </section>
 
       {/* Booking Form */}
-      <section className="py-12">
+      <section className="py-8 sm:py-12">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-3xl">
             <Card>
@@ -237,7 +237,7 @@ export default function BookCabPage() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Personal Information */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Personal Information</h3>
+                    <h3 className="text-base font-semibold sm:text-lg">Personal Information</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="firstName">First Name *</Label>
@@ -288,7 +288,7 @@ export default function BookCabPage() {
 
                   {/* Trip Details */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Trip Details</h3>
+                    <h3 className="text-base font-semibold sm:text-lg">Trip Details</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="pickupAddress">Pickup Address *</Label>
@@ -354,45 +354,46 @@ export default function BookCabPage() {
                         <FieldError error={errors.pickupTime} />
                       </div>
                     </div>
+                  </div>
+
+                  {/* Vehicle Selection */}
+                  <div className="space-y-4">
+                    <h3 className="text-base font-semibold sm:text-lg">Vehicle & Payment</h3>
                     <div className="space-y-2">
                       <Label htmlFor="vehicleType">Vehicle Type *</Label>
-                      <Select value={formData.vehicleType} onValueChange={(value) => handleChange('vehicleType', value)}>
+                      <Select
+                        value={formData.vehicleType}
+                        onValueChange={(value) => handleChange('vehicleType', value)}
+                      >
                         <SelectTrigger id="vehicleType">
                           <SelectValue placeholder="Select vehicle type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="hatchback">Hatchback (4 passengers)</SelectItem>
-                          <SelectItem value="sedan">Sedan (4 passengers)</SelectItem>
-                          <SelectItem value="suv">SUV (6-7 passengers)</SelectItem>
-                          <SelectItem value="luxury-sedan">Luxury Sedan (4 passengers)</SelectItem>
-                          <SelectItem value="mini-van">Mini Van (8-10 passengers)</SelectItem>
-                          <SelectItem value="tempo-traveller">Tempo Traveller (12-17 passengers)</SelectItem>
+                          <SelectItem value="mini">Mini (4 seater)</SelectItem>
+                          <SelectItem value="sedan">Sedan (4 seater)</SelectItem>
+                          <SelectItem value="suv">SUV (6-7 seater)</SelectItem>
+                          <SelectItem value="premiumSuv">Premium SUV (6-7 seater)</SelectItem>
                         </SelectContent>
                       </Select>
                       <FieldError error={errors.vehicleType} />
                     </div>
-                  </div>
 
-                  {/* Payment Options */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Payment Options</h3>
-                    <div className="space-y-3">
-                      <Label>Select Payment Method *</Label>
+                    <div className="space-y-2">
+                      <Label>Payment Method *</Label>
                       <RadioGroup
                         value={formData.paymentMethod}
                         onValueChange={(value) => handleChange('paymentMethod', value)}
-                        className="space-y-3"
+                        className="grid gap-3 sm:grid-cols-2"
                       >
                         {PAYMENT_METHODS.map((method) => (
-                          <div
-                            key={method.value}
-                            className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50"
-                          >
-                            <RadioGroupItem value={method.value} id={method.value} />
-                            <Label htmlFor={method.value} className="flex-1 cursor-pointer font-normal">
-                              <div className="font-medium">{method.label}</div>
-                              <div className="text-sm text-muted-foreground">{method.description}</div>
-                            </Label>
+                          <div key={method.value} className="flex items-start space-x-3 rounded-lg border p-3">
+                            <RadioGroupItem value={method.value} id={method.value} className="mt-0.5" />
+                            <div className="flex-1">
+                              <Label htmlFor={method.value} className="cursor-pointer font-medium">
+                                {method.label}
+                              </Label>
+                              <p className="text-xs text-muted-foreground">{method.description}</p>
+                            </div>
                           </div>
                         ))}
                       </RadioGroup>
@@ -400,38 +401,41 @@ export default function BookCabPage() {
                     </div>
                   </div>
 
-                  {/* Service Ratings */}
+                  {/* Optional Ratings */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Service Ratings (Optional)</h3>
-                    <p className="text-sm text-muted-foreground">
-                      If you've used our services before, please rate your experience
-                    </p>
+                    <h3 className="text-base font-semibold sm:text-lg">Optional Ratings</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <StarRating
-                        label="Cab Service Rating"
-                        id="cabRating"
-                        value={formData.cabRating}
-                        onChange={(value) => handleChange('cabRating', value)}
-                        error={errors.cabRating}
-                      />
-                      <StarRating
-                        label="Driver Service Rating"
-                        id="driverRating"
-                        value={formData.driverRating}
-                        onChange={(value) => handleChange('driverRating', value)}
-                        error={errors.driverRating}
-                      />
+                      <div className="space-y-2">
+                        <Label htmlFor="cabRating">Cab Service Rating</Label>
+                        <StarRating
+                          id="cabRating"
+                          label="Cab Service Rating"
+                          value={formData.cabRating}
+                          onChange={(value) => handleChange('cabRating', value)}
+                        />
+                        <FieldError error={errors.cabRating} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="driverRating">Driver Service Rating</Label>
+                        <StarRating
+                          id="driverRating"
+                          label="Driver Service Rating"
+                          value={formData.driverRating}
+                          onChange={(value) => handleChange('driverRating', value)}
+                        />
+                        <FieldError error={errors.driverRating} />
+                      </div>
                     </div>
                   </div>
 
-                  {/* Additional Comments */}
+                  {/* Comments */}
                   <div className="space-y-2">
                     <Label htmlFor="comments">Additional Comments</Label>
                     <Textarea
                       id="comments"
                       value={formData.comments}
                       onChange={(e) => handleChange('comments', e.target.value)}
-                      placeholder="Any special requests or additional information..."
+                      placeholder="Any special requests or instructions..."
                       rows={4}
                     />
                   </div>
@@ -439,8 +443,8 @@ export default function BookCabPage() {
                   {/* Submit Button */}
                   <Button
                     type="submit"
-                    size="lg"
                     className="w-full"
+                    size="lg"
                     disabled={submitBooking.isPending}
                   >
                     {submitBooking.isPending ? 'Submitting...' : 'Submit Booking'}

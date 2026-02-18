@@ -1,24 +1,33 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
+  "summary": "Project is an Android app.",
   "architectural_notes": [],
   "known_issues": [],
   "isFixRequest": false,
+  "imageRequirements": "## Required Images\n- Square app icon with a clean, modern cab/travel mark and warm earthy palette (pwa-icon-192.dim_192x192.png)\n- Square app icon with a clean, modern cab/travel mark and warm earthy palette (pwa-icon-512.dim_512x512.png)\n- Maskable square app icon variant with generous safe area and warm earthy palette (pwa-maskable-512.dim_512x512.png)",
   "existing_features": [
     {
-      "id": "feature-add-a-new-domain-setup-page-that-explains-in-english-how-to-buy-a-domain-from-any-registrar-and-configure-dns-to-point-the-domain-to-this-internet-computer-app-include-step-by-step-instructions-and-clearly-state-that-domain-purchase-happens-outside-the-app",
-      "title": "Add a new “Domain Setup” page that explains (in English) how to buy a domain from any registrar and configure DNS to point the domain to this Internet Computer app (include step-by-step instructions and clearly state that domain purchase happens outside the app).",
+      "id": "feature-add-progressive-web-app-pwa-support-so-the-existing-aasra-cab-web-app-can-be-installed-and-used-like-an-android-app-add-to-home-screen-including-a-web-app-manifest-required-android-icon-sizes-and-appropriate-html-meta-tags",
+      "title": "Add Progressive Web App (PWA) support so the existing AASRA cab web app can be installed and used like an Android app (Add to Home Screen), including a web app manifest, required Android icon sizes, and appropriate HTML meta tags.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-navigation-access-to-the-new-domain-setup-page-from-the-existing-site-navigation-add-a-link-in-the-footer-support-or-quick-links-section",
-      "title": "Add navigation access to the new “Domain Setup” page from the existing site navigation (add a link in the footer Support or Quick Links section).",
+      "id": "feature-ensure-the-installed-pwa-experience-works-well-on-android-by-verifying-key-screens-are-responsive-and-touch-friendly-header-navigation-booking-flow-contact-options-and-tracking-screens-and-that-content-is-not-clipped-on-small-viewports",
+      "title": "Ensure the installed PWA experience works well on Android by verifying key screens are responsive and touch-friendly (header navigation, booking flow, contact options, and tracking screens) and that content is not clipped on small viewports.",
       "reqIds": [
         "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-the-generated-pwa-icon-assets-into-the-project-as-static-files-under-frontend-public-assets-generated-and-reference-them-from-the-pwa-manifest",
+      "title": "Add the generated PWA icon assets into the project as static files under frontend/public/assets/generated and reference them from the PWA manifest.",
+      "reqIds": [
+        "REQ-3"
       ],
       "version": 1
     }
@@ -26,12 +35,13 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Purchase a domain for the project",
+      "summary": "Build an Android app",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "projectName": "Aasra Cab Portal",
+  "gameProjectType": "none",
+  "projectName": "AASRA Cab App",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

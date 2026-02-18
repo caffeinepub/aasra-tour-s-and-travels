@@ -4,4 +4,5 @@ export const businessInfo = {
   email: 'aasracab05@gmail.com',
   serviceArea: 'Serving major cities across India',
   businessHours: 'Available 24/7 for your convenience',
+  whatsapp: undefined as string | undefined, // Optional WhatsApp number, falls back to phone
 };

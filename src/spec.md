@@ -1,10 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Provide an in-app guide for purchasing a domain externally and configuring DNS to point a custom domain to the Aasra Cab Portal Internet Computer app.
+**Goal:** Make the existing AASRA cab web app installable and usable like an Android-friendly PWA (Add to Home Screen) with a proper manifest, icons, and mobile-ready UI.
 
 **Planned changes:**
-- Add a new “Domain Setup” page/route (e.g., `/domain-setup`) containing an English, step-by-step guide for buying a domain from any registrar and configuring DNS, including a clear note that domain purchase happens outside the app.
-- Add a “Domain Setup” link in the footer navigation (Support or Quick Links) that routes to the new page via client-side navigation and matches existing UI styling (Tailwind + shadcn).
+- Add and link a valid web app manifest that includes required fields (name, short_name, start_url, display: standalone, theme_color, background_color, icons).
+- Add appropriate PWA-related HTML meta tags needed for installability and correct Android launch behavior.
+- Add PWA icon assets as static files under `frontend/public/assets/generated` and reference them from the manifest (including at least 192x192 and 512x512).
+- Verify and adjust key screens for Android responsiveness and touch usability (header navigation, booking flow, contact options, tracking screens) to avoid clipping and horizontal scrolling on small viewports.
 
-**User-visible outcome:** Users can open a new Domain Setup page from the footer to read clear English instructions for buying a domain elsewhere and setting DNS to connect it to the app.
+**User-visible outcome:** Users on Android (e.g., Chrome) can install the web app from the browser and launch it in standalone mode, with core screens remaining touch-friendly and usable on common phone sizes.

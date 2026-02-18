@@ -1,42 +1,118 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Add Domain Setup Guide Page + Footer Link",
+  "title": "AASRA Cab App — Android-friendly PWA installability",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Create a new Domain Setup guide page describing external domain purchase and DNS configuration for pointing a custom domain to the Internet Computer app.",
+      "summary": "Add PWA install support (manifest, meta tags, and a basic service worker registration) so Android browsers can install and launch the app in standalone mode.",
       "acceptanceCriteria": [
-        "A new route is available (e.g., \"/domain-setup\") that renders a Domain Setup guide page.",
-        "The page content includes: (1) buy domain instructions, (2) DNS configuration steps, and (3) a clear note that the app cannot directly purchase domains.",
-        "All user-facing copy on the page is in English.",
-        "The page uses existing UI components/styling conventions (Tailwind + shadcn) and is readable on mobile and desktop."
+        "A valid web app manifest is present and linked from the app HTML.",
+        "The manifest includes at least name, short_name, start_url, display (standalone), theme_color, background_color, and icons.",
+        "At least one 192x192 and one 512x512 app icon are available and referenced by the manifest.",
+        "The app shows as installable in a modern Android browser (e.g., Chrome) and launches in standalone mode when installed."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/DomainSetupPage.tsx",
+          "path": "frontend/index.html",
+          "operation": "modify",
+          "description": "Add required PWA-related HTML tags: link the web app manifest, set theme-color, and include Android/installed-app friendly meta tags (e.g., mobile-web-app-capable/format-detection as appropriate) to support Add to Home Screen."
+        },
+        {
+          "path": "frontend/public/manifest.webmanifest",
           "operation": "create",
-          "description": "Add a new Domain Setup guide page in English with step-by-step sections for (1) purchasing a domain via any registrar (explicitly stating purchase/billing happen outside the app), and (2) configuring DNS records to point the domain to the deployed Internet Computer app (include practical steps, common record types, and verification tips). Use existing Tailwind styling conventions and compose shadcn-ui components (e.g., Card/Accordion/Alert) to keep content scannable and mobile-friendly. Verify the component's usage instructions before implementing."
+          "description": "Create a valid web app manifest for AASRA Cab App with required fields (name, short_name, start_url, display=standalone, theme_color, background_color) and icon declarations pointing at the generated icon assets under frontend/public/assets/generated."
+        },
+        {
+          "path": "frontend/public/sw.js",
+          "operation": "create",
+          "description": "Add a minimal service worker file needed for installability checks (no push notifications; keep scope minimal and avoid complex caching beyond what is necessary for PWA install criteria)."
         },
         {
           "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Wire the new Domain Setup page into TanStack Router by importing the page component and adding a \"/domain-setup\" route to the route tree so it is navigable without a full page reload."
+          "description": "Register the service worker from within the React app (since frontend/src/main.tsx is immutable), ensuring registration only runs in supported browsers and does not break normal web usage."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Add a footer navigation link to the Domain Setup page.",
+      "summary": "Improve Android PWA usability by ensuring key screens are responsive, touch-friendly, and not clipped on small viewports (header navigation, booking flow, contact options, tracking, and profile).",
       "acceptanceCriteria": [
-        "The footer includes a visible “Domain Setup” link.",
-        "Clicking the link navigates to the Domain Setup page without a full page reload."
+        "Core pages (Home, Book a Cab, Contact, Tracking, Profile) are usable on common Android viewport widths without horizontal scrolling.",
+        "Tap targets in the header/mobile menu and primary CTAs are comfortably clickable on touch devices.",
+        "No critical UI elements are obscured by fixed/sticky UI on small screens."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/SiteFooter.tsx",
+          "path": "frontend/src/components/SiteHeader.tsx",
           "operation": "modify",
-          "description": "Add a visible \"Domain Setup\" Link (TanStack Router Link) in the footer under the Support or Quick Links list, pointing to \"/domain-setup\", matching existing styling and hover/active behaviors. Verify the component's usage instructions before implementing."
+          "description": "Adjust mobile/desktop header interactions for touch: ensure the mobile menu trigger and key CTAs meet comfortable tap target sizing, and verify sticky header behavior does not obscure content on small screens."
+        },
+        {
+          "path": "frontend/src/components/SiteLayout.tsx",
+          "operation": "modify",
+          "description": "Ensure the main content area accounts for sticky header and mobile safe areas (e.g., avoid top/bottom clipping on small Android viewports) without adding new routes."
+        },
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Add small, global mobile-friendly adjustments (e.g., safe-area insets handling where appropriate, and preventing accidental horizontal overflow) to improve installed PWA behavior on Android."
+        },
+        {
+          "path": "frontend/src/pages/HomePage.tsx",
+          "operation": "modify",
+          "description": "Verify Home page layout remains responsive in narrow Android viewports; apply minimal class/layout tweaks if any elements overflow or CTAs become hard to tap."
+        },
+        {
+          "path": "frontend/src/pages/BookCabPage.tsx",
+          "operation": "modify",
+          "description": "Verify booking flow form controls and sections are responsive and touch-friendly on Android; adjust grid/spacing and any potential overflow areas to avoid horizontal scrolling."
+        },
+        {
+          "path": "frontend/src/pages/ContactPage.tsx",
+          "operation": "modify",
+          "description": "Verify contact option cards and WhatsApp link layout are readable and tappable on small viewports; adjust grid breakpoints/spacing if needed to prevent clipping."
+        },
+        {
+          "path": "frontend/src/pages/TrackingPage.tsx",
+          "operation": "modify",
+          "description": "Verify tracking screen (map card + details card) remains usable on narrow widths; ensure long text wraps and action buttons remain accessible without overlap from sticky UI."
+        },
+        {
+          "path": "frontend/src/pages/ProfilePage.tsx",
+          "operation": "modify",
+          "description": "Verify profile page sections (referrals, uploads, payment preferences) do not overflow horizontally and remain touch-friendly; adjust layout for small Android viewports as needed."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Add generated PWA icon assets as static files under frontend/public/assets/generated and reference them from the PWA manifest.",
+      "acceptanceCriteria": [
+        "New icon files exist under frontend/public/assets/generated.",
+        "The manifest references the icons using correct paths and sizes."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/public/assets/generated/pwa-icon-192.dim_192x192.png",
+          "operation": "create",
+          "description": "Add the generated 192x192 PWA app icon at frontend/public/assets/generated/pwa-icon-192.dim_192x192.png."
+        },
+        {
+          "path": "frontend/public/assets/generated/pwa-icon-512.dim_512x512.png",
+          "operation": "create",
+          "description": "Add the generated 512x512 PWA app icon at frontend/public/assets/generated/pwa-icon-512.dim_512x512.png."
+        },
+        {
+          "path": "frontend/public/assets/generated/pwa-maskable-512.dim_512x512.png",
+          "operation": "create",
+          "description": "Add the generated 512x512 maskable PWA app icon at frontend/public/assets/generated/pwa-maskable-512.dim_512x512.png."
+        },
+        {
+          "path": "frontend/public/manifest.webmanifest",
+          "operation": "modify",
+          "description": "Reference the new icon assets from the manifest with correct src paths, sizes, and purpose (include maskable for frontend/public/assets/generated/pwa-maskable-512.dim_512x512.png)."
         }
       ]
     }

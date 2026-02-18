@@ -1,57 +1,79 @@
 {
   "kind": "build_request",
-  "title": "Add Domain Purchase & Custom Domain Setup Guide",
-  "projectName": "Aasra Cab Portal",
+  "title": "Make the web app installable as an Android-friendly PWA",
+  "projectName": "AASRA Cab App",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add a new “Domain Setup” page that explains (in English) how to buy a domain from any registrar and configure DNS to point the domain to this Internet Computer app (include step-by-step instructions and clearly state that domain purchase happens outside the app).",
+      "text": "Add Progressive Web App (PWA) support so the existing AASRA cab web app can be installed and used like an Android app (Add to Home Screen), including a web app manifest, required Android icon sizes, and appropriate HTML meta tags.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-6"
         ],
         "quotes": [
-          "Buy domain"
+          "Android app"
         ]
       },
       "acceptanceCriteria": [
-        "A new route is available (e.g., \"/domain-setup\") that renders a Domain Setup guide page.",
-        "The page content includes: (1) buy domain instructions, (2) DNS configuration steps, and (3) a clear note that the app cannot directly purchase domains.",
-        "All user-facing copy on the page is in English.",
-        "The page uses existing UI components/styling conventions (Tailwind + shadcn) and is readable on mobile and desktop."
+        "A valid web app manifest is present and linked from the app HTML.",
+        "The manifest includes at least name, short_name, start_url, display (standalone), theme_color, background_color, and icons.",
+        "At least one 192x192 and one 512x512 app icon are available and referenced by the manifest.",
+        "The app shows as installable in a modern Android browser (e.g., Chrome) and launches in standalone mode when installed."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add navigation access to the new “Domain Setup” page from the existing site navigation (add a link in the footer Support or Quick Links section).",
+      "text": "Ensure the installed PWA experience works well on Android by verifying key screens are responsive and touch-friendly (header navigation, booking flow, contact options, and tracking screens) and that content is not clipped on small viewports.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-6"
         ],
         "quotes": [
-          "Buy domain"
+          "Android app"
         ]
       },
       "acceptanceCriteria": [
-        "The footer includes a visible “Domain Setup” link.",
-        "Clicking the link navigates to the Domain Setup page without a full page reload."
+        "Core pages (Home, Book a Cab, Contact, Tracking, Profile) are usable on common Android viewport widths without horizontal scrolling.",
+        "Tap targets in the header/mobile menu and primary CTAs are comfortably clickable on touch devices.",
+        "No critical UI elements are obscured by fixed/sticky UI on small screens."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Add the generated PWA icon assets into the project as static files under frontend/public/assets/generated and reference them from the PWA manifest.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "Android app"
+        ]
+      },
+      "acceptanceCriteria": [
+        "New icon files exist under frontend/public/assets/generated.",
+        "The manifest references the icons using correct paths and sizes."
       ]
     }
   ],
   "constraints": [
-    "Do not attempt to programmatically purchase a domain; domain registration and billing must be handled externally (outside the app).",
-    "Do not edit files under frontend/src/components/ui (read-only components must be composed, not modified).",
-    "Do not edit any paths listed in frontend.immutablePaths (use composition/wrappers instead)."
+    "Do not edit files under frontend/src/components/ui (Shadcn UI sources must be composed, not modified).",
+    "Do not edit frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/main.tsx (immutable paths).",
+    "Backend remains a single Motoko actor in backend/main.mo; no additional backend services."
   ],
   "nonGoals": [
-    "Implementing a registrar API integration for domain purchase.",
-    "Automated DNS changes or certificate management from within the app."
+    "Building or publishing a native Android APK/AAB to the Google Play Store.",
+    "Adding push notifications or real-time WebSocket features as part of the Android effort."
   ],
   "imageRequirements": {
-    "required": [],
+    "required": [
+      "Square app icon with a clean, modern cab/travel mark and warm earthy palette (pwa-icon-192.dim_192x192.png)",
+      "Square app icon with a clean, modern cab/travel mark and warm earthy palette (pwa-icon-512.dim_512x512.png)",
+      "Maskable square app icon variant with generous safe area and warm earthy palette (pwa-maskable-512.dim_512x512.png)"
+    ],
     "edits": []
   },
   "userProfileUpdate": {

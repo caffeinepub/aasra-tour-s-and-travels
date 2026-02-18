@@ -1,8 +1,11 @@
 import { Link } from '@tanstack/react-router';
 import { businessInfo } from '../content/businessInfo';
+import { buildWhatsAppEnquiryUrl, getWhatsAppDisplayNumber } from '../utils/whatsapp';
 
 export default function SiteFooter() {
   const currentYear = new Date().getFullYear();
+  const whatsappUrl = buildWhatsAppEnquiryUrl();
+  const whatsappNumber = getWhatsAppDisplayNumber();
 
   return (
     <footer className="border-t bg-muted/30">
@@ -117,6 +120,16 @@ export default function SiteFooter() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>Contact: {businessInfo.phone}</li>
               <li>Helpline: {businessInfo.helpline}</li>
+              <li>
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#25D366] hover:underline"
+                >
+                  WhatsApp: {whatsappNumber}
+                </a>
+              </li>
               <li>{businessInfo.email}</li>
               <li>{businessInfo.serviceArea}</li>
             </ul>
