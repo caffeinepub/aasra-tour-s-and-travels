@@ -1,79 +1,114 @@
 {
   "kind": "build_request",
-  "title": "Make the web app installable as an Android-friendly PWA",
-  "projectName": "AASRA Cab App",
+  "title": "Driver booking dispatch system (assigned bookings inbox + actions)",
+  "projectName": "AASRA Driver Dispatch",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add Progressive Web App (PWA) support so the existing AASRA cab web app can be installed and used like an Android app (Add to Home Screen), including a web app manifest, required Android icon sizes, and appropriate HTML meta tags.",
-      "target": "frontend",
+      "text": "Add backend APIs to support a driver dispatch workflow: (1) allow an authenticated driver to fetch a list of bookings assigned to them, sorted by newest first, and (2) allow an assigned driver to update the status of their own booking to one of: accepted, refused, completed, or cancelled (and when cancelled/refused, store an optional reason). Enforce authorization so only the assigned driver (or admin where appropriate) can access these APIs.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-1"
         ],
         "quotes": [
-          "Android app"
+          "Add booking dispatch system to driver"
         ]
       },
       "acceptanceCriteria": [
-        "A valid web app manifest is present and linked from the app HTML.",
-        "The manifest includes at least name, short_name, start_url, display (standalone), theme_color, background_color, and icons.",
-        "At least one 192x192 and one 512x512 app icon are available and referenced by the manifest.",
-        "The app shows as installable in a modern Android browser (e.g., Chrome) and launches in standalone mode when installed."
+        "Calling the new 'get my assigned bookings' query as a driver returns only bookings where assigned_driver == caller, sorted by booking id descending (matching existing admin sorting behavior).",
+        "Calling the new 'driver update booking status' method as the assigned driver updates that booking only; non-assigned users are rejected with a clear trap message.",
+        "Admin-only methods (e.g., getAllBookings, updateBookingStatus, assignDriver) remain admin-only and unchanged in behavior.",
+        "If a driver provides a refusal/cancellation reason, it is persisted on the booking (e.g., via cancel_reason) and returned in subsequent reads."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Ensure the installed PWA experience works well on Android by verifying key screens are responsive and touch-friendly (header navigation, booking flow, contact options, and tracking screens) and that content is not clipped on small viewports.",
+      "text": "Create a driver dispatch UI that lets an authenticated driver view and manage their assigned bookings: include an “Assigned Bookings” list with key details (booking id, pickup/destination, pickup time, customer name/phone, current status), a detail panel, and clear actions to Accept, Refuse (with required reason), Mark Completed, and Cancel (with required reason).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-1"
         ],
         "quotes": [
-          "Android app"
+          "Add booking dispatch system to driver"
         ]
       },
       "acceptanceCriteria": [
-        "Core pages (Home, Book a Cab, Contact, Tracking, Profile) are usable on common Android viewport widths without horizontal scrolling.",
-        "Tap targets in the header/mobile menu and primary CTAs are comfortably clickable on touch devices.",
-        "No critical UI elements are obscured by fixed/sticky UI on small screens."
+        "A driver can navigate to a dedicated dispatch screen and see only their assigned bookings.",
+        "Selecting a booking shows full details and available actions appropriate to its current status.",
+        "Refuse/Cancel actions require a non-empty reason before submission and show inline validation errors if missing.",
+        "After any status mutation, the UI refreshes using React Query invalidation so the list and details reflect the updated status."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Add the generated PWA icon assets into the project as static files under frontend/public/assets/generated and reference them from the PWA manifest.",
+      "text": "Add navigation/routes for the driver dispatch workflow: introduce a route for the dispatch inbox (e.g., /driver/dispatch) and ensure drivers can easily jump from an assigned booking to the existing location update page (/driver/track/$bookingId). Add a prominent entry point from the Profile page (driver profile) to the dispatch inbox.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-1"
         ],
         "quotes": [
-          "Android app"
+          "Add booking dispatch system to driver"
         ]
       },
       "acceptanceCriteria": [
-        "New icon files exist under frontend/public/assets/generated.",
-        "The manifest references the icons using correct paths and sizes."
+        "A new route exists for a driver dispatch inbox and is registered in the TanStack Router route tree.",
+        "From the dispatch booking details, the driver can navigate to the existing location update screen for that booking id.",
+        "The Profile page shows an “Open Dispatch” (or similar) button/section only when the caller has a driver profile."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Add React Query hooks for driver dispatch: provide a query hook for fetching the caller’s assigned bookings and mutation hooks for driver status updates (and reason when applicable). Ensure query keys and invalidation patterns are consistent with existing booking/tracking hooks.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Add booking dispatch system to driver"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Frontend has dedicated hooks for: (1) get assigned bookings for caller, (2) driver update booking status with optional reason.",
+        "On mutation success, relevant queries are invalidated (assigned bookings list, and any booking detail/tracking queries for the affected booking).",
+        "Hooks gracefully handle missing actor/identity similar to existing hooks (no crashes)."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Apply a cohesive driver-dispatch visual theme consistent with the app’s existing warm/amber styling: clear hierarchy for “new/active/completed” states, high-contrast status badges, and mobile-first layout that works well in the Android build.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Add booking dispatch system to driver"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Dispatch UI is readable and usable on narrow mobile screens without horizontal scrolling.",
+        "Statuses are visually distinct (e.g., Pending/Accepted/Completed/Cancelled/Refused) using consistent badge styles.",
+        "Primary actions (Accept/Refuse/Complete/Cancel/Update Location) are visually prominent and not easily mis-tapped."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/components/ui (Shadcn UI sources must be composed, not modified).",
-    "Do not edit frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/main.tsx (immutable paths).",
-    "Backend remains a single Motoko actor in backend/main.mo; no additional backend services."
+    "Backend must remain a single Motoko actor (all logic in backend/main.mo).",
+    "Do not edit files under frontend/src/components/ui or any other immutablePaths listed in SYSTEM_CONTEXT; compose existing UI components instead.",
+    "Use English for all user-facing text."
   ],
   "nonGoals": [
-    "Building or publishing a native Android APK/AAB to the Google Play Store.",
-    "Adding push notifications or real-time WebSocket features as part of the Android effort."
+    "Implementing real-time dispatch via WebSockets/push notifications.",
+    "Integrating external maps/GPS/geolocation services for automatic driver location capture.",
+    "Third-party authentication providers beyond Internet Identity."
   ],
   "imageRequirements": {
-    "required": [
-      "Square app icon with a clean, modern cab/travel mark and warm earthy palette (pwa-icon-192.dim_192x192.png)",
-      "Square app icon with a clean, modern cab/travel mark and warm earthy palette (pwa-icon-512.dim_512x512.png)",
-      "Maskable square app icon variant with generous safe area and warm earthy palette (pwa-maskable-512.dim_512x512.png)"
-    ],
+    "required": [],
     "edits": []
   },
   "userProfileUpdate": {

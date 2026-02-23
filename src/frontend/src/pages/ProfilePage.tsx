@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { useGetCallerUserProfile, useSaveCallerUserProfile } from '../hooks/useCallerProfile';
 import { useGenerateReferralCode, useGetReferralBonus, useApplyReferralCode } from '../hooks/useReferral';
 import { useGetCallerAttachment, useUploadAttachment } from '../hooks/useAttachments';
@@ -10,13 +11,14 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
-import { Copy, CheckCircle2, Upload, Download, Gift, AlertCircle } from 'lucide-react';
+import { Copy, CheckCircle2, Upload, Download, Gift, AlertCircle, Truck } from 'lucide-react';
 import { PAYMENT_METHODS, getPaymentMethodLabel } from '../utils/paymentMethods';
 import { Variant_cab_driver } from '../backend';
 import AuthRequiredScreen from '../components/AuthRequiredScreen';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 
 export default function ProfilePage() {
+  const navigate = useNavigate();
   const { identity } = useInternetIdentity();
   const { data: userProfile, isLoading: profileLoading } = useGetCallerUserProfile();
   const saveProfile = useSaveCallerUserProfile();
@@ -55,6 +57,7 @@ export default function ProfilePage() {
   }
 
   const isCustomer = userProfile?.__kind__ === 'customer';
+  const isDriver = userProfile?.__kind__ === 'driver';
   const currentPaymentMethod = isCustomer ? userProfile.customer.preferredPaymentMethod : undefined;
 
   const handleSavePaymentMethod = async () => {
@@ -154,6 +157,31 @@ export default function ProfilePage() {
       <section className="py-8 sm:py-12 lg:py-16">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-3xl space-y-6">
+            {/* Driver Dispatch Entry Point */}
+            {isDriver && (
+              <Card className="border-2 border-amber-200 dark:border-amber-900 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/10 dark:to-orange-950/10">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Truck className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+                    <CardTitle className="text-lg sm:text-xl">Driver Dispatch</CardTitle>
+                  </div>
+                  <CardDescription>
+                    View and manage your assigned bookings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    onClick={() => navigate({ to: '/driver/dispatch' })}
+                    className="w-full bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-700"
+                    size="lg"
+                  >
+                    <Truck className="mr-2 h-5 w-5" />
+                    Open Dispatch
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Payment Method (Customer Only) */}
             {isCustomer && (
               <Card>
@@ -343,7 +371,7 @@ export default function ProfilePage() {
                         }}
                         disabled={uploadAttachment.isPending}
                       />
-                      {cabUploadProgress > 0 && (
+                      {cabUploadProgress > 0 && cabUploadProgress < 100 && (
                         <div className="space-y-1">
                           <Progress value={cabUploadProgress} />
                           <p className="text-xs text-muted-foreground text-center">
@@ -385,7 +413,7 @@ export default function ProfilePage() {
                         }}
                         disabled={uploadAttachment.isPending}
                       />
-                      {driverUploadProgress > 0 && (
+                      {driverUploadProgress > 0 && driverUploadProgress < 100 && (
                         <div className="space-y-1">
                           <Progress value={driverUploadProgress} />
                           <p className="text-xs text-muted-foreground text-center">

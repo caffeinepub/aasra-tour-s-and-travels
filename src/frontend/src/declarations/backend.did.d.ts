@@ -16,7 +16,24 @@ export interface Attachment {
   'name' : string,
   'uploadTime' : bigint,
 }
-export interface BookingRequest {
+export interface BookingRequestInput {
+  'destination_address' : string,
+  'pickup_address' : string,
+  'paymentMethod' : string,
+  'pickup_postal_code' : string,
+  'submit_time' : bigint,
+  'cab_rating' : [] | [bigint],
+  'cancel_reason' : [] | [string],
+  'email' : string,
+  'pickup_time' : bigint,
+  'first_name' : string,
+  'last_name' : string,
+  'comments' : string,
+  'phone_number' : string,
+  'destination_postal_code' : string,
+  'driver_rating' : [] | [bigint],
+}
+export interface BookingRequestView {
   'id' : bigint,
   'destination_address' : string,
   'status' : BookingStatus,
@@ -25,6 +42,7 @@ export interface BookingRequest {
   'pickup_postal_code' : string,
   'submit_time' : bigint,
   'cab_rating' : [] | [bigint],
+  'declined_by' : Array<Principal>,
   'cancel_reason' : [] | [string],
   'email' : string,
   'driver_location' : [] | [Location],
@@ -46,6 +64,11 @@ export type BookingStatus = { 'cancelled' : null } |
 export interface CustomerProfile {
   'name' : string,
   'preferredPaymentMethod' : [] | [PaymentMethod],
+}
+export interface DriverBookingUpdate {
+  'status' : BookingStatus,
+  'bookingId' : bigint,
+  'reason' : [] | [string],
 }
 export interface DriverProfile {
   'cabNumber' : string,
@@ -111,26 +134,29 @@ export interface _SERVICE {
   'assignDriver' : ActorMethod<[bigint, Principal], undefined>,
   'awardReferralBonuses' : ActorMethod<[bigint, bigint, bigint], undefined>,
   'generateReferralCode' : ActorMethod<[], string>,
-  'getAllBookings' : ActorMethod<[], Array<BookingRequest>>,
+  'getAllBookings' : ActorMethod<[], Array<BookingRequestView>>,
   'getAttachment' : ActorMethod<
     [{ 'cab' : null } | { 'driver' : null }, Principal],
     [] | [Attachment]
   >,
-  'getBooking' : ActorMethod<[bigint], BookingRequest>,
+  'getBooking' : ActorMethod<[bigint], BookingRequestView>,
   'getCallerAttachment' : ActorMethod<
     [{ 'cab' : null } | { 'driver' : null }],
     [] | [Attachment]
   >,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getDriverBookings' : ActorMethod<[], Array<BookingRequestView>>,
+  'getDriverDispatchBookings' : ActorMethod<[], Array<BookingRequestView>>,
   'getDriverLocation' : ActorMethod<[bigint], [] | [Location]>,
   'getRateCard' : ActorMethod<[], RateCard>,
   'getReferralBonus' : ActorMethod<[], [] | [ReferralBonus]>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
-  'submitBooking' : ActorMethod<[BookingRequest], bigint>,
+  'submitBooking' : ActorMethod<[BookingRequestInput], bigint>,
   'updateBookingStatus' : ActorMethod<[bigint, string], undefined>,
+  'updateDriverBookingStatus' : ActorMethod<[DriverBookingUpdate], undefined>,
   'updateDriverLocation' : ActorMethod<[bigint, Location], undefined>,
   'updateRateCard' : ActorMethod<[RateCard], undefined>,
   'uploadAttachment' : ActorMethod<

@@ -18,7 +18,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import FieldError from '../components/forms/FieldError';
 import StarRating from '../components/forms/StarRating';
 import { CheckCircle2 } from 'lucide-react';
-import type { BookingRequest } from '../backend';
+import type { BookingRequestInput } from '../backend';
 import { PAYMENT_METHODS } from '../utils/paymentMethods';
 
 interface FormData {
@@ -120,8 +120,7 @@ export default function BookCabPage() {
     const pickupDateTime = new Date(`${formData.pickupDate}T${formData.pickupTime}`);
     const pickupTimestamp = BigInt(pickupDateTime.getTime());
 
-    const bookingRequest: BookingRequest = {
-      id: BigInt(0),
+    const bookingRequest: BookingRequestInput = {
       first_name: formData.firstName.trim(),
       last_name: formData.lastName.trim(),
       email: formData.email.trim(),
@@ -132,9 +131,7 @@ export default function BookCabPage() {
       destination_postal_code: formData.destinationPostalCode.trim(),
       pickup_time: pickupTimestamp,
       comments: `Vehicle: ${formData.vehicleType}. ${formData.comments.trim()}`,
-      status: { pending: null } as any,
       paymentMethod: formData.paymentMethod,
-      submitted_by: '' as any,
       cancel_reason: undefined,
       submit_time: BigInt(Date.now()),
       cab_rating: formData.cabRating !== null ? BigInt(formData.cabRating) : undefined,
@@ -356,35 +353,30 @@ export default function BookCabPage() {
                     </div>
                   </div>
 
-                  {/* Vehicle Selection */}
+                  {/* Vehicle & Payment */}
                   <div className="space-y-4">
                     <h3 className="text-base font-semibold sm:text-lg">Vehicle & Payment</h3>
-                    <div className="space-y-2">
-                      <Label htmlFor="vehicleType">Vehicle Type *</Label>
-                      <Select
-                        value={formData.vehicleType}
-                        onValueChange={(value) => handleChange('vehicleType', value)}
-                      >
-                        <SelectTrigger id="vehicleType">
-                          <SelectValue placeholder="Select vehicle type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="mini">Mini (4 seater)</SelectItem>
-                          <SelectItem value="sedan">Sedan (4 seater)</SelectItem>
-                          <SelectItem value="suv">SUV (6-7 seater)</SelectItem>
-                          <SelectItem value="premiumSuv">Premium SUV (6-7 seater)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FieldError error={errors.vehicleType} />
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="vehicleType">Vehicle Type *</Label>
+                        <Select value={formData.vehicleType} onValueChange={(value) => handleChange('vehicleType', value)}>
+                          <SelectTrigger id="vehicleType">
+                            <SelectValue placeholder="Select vehicle type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="mini">Mini (4 seater)</SelectItem>
+                            <SelectItem value="sedan">Sedan (4 seater)</SelectItem>
+                            <SelectItem value="suv">SUV (6-7 seater)</SelectItem>
+                            <SelectItem value="premiumSuv">Premium SUV (6-7 seater)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FieldError error={errors.vehicleType} />
+                      </div>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <Label>Payment Method *</Label>
-                      <RadioGroup
-                        value={formData.paymentMethod}
-                        onValueChange={(value) => handleChange('paymentMethod', value)}
-                        className="grid gap-3 sm:grid-cols-2"
-                      >
+                      <RadioGroup value={formData.paymentMethod} onValueChange={(value) => handleChange('paymentMethod', value)} className="grid gap-3 sm:grid-cols-2">
                         {PAYMENT_METHODS.map((method) => (
                           <div key={method.value} className="flex items-start space-x-3 rounded-lg border p-3">
                             <RadioGroupItem value={method.value} id={method.value} className="mt-0.5" />
@@ -404,38 +396,35 @@ export default function BookCabPage() {
                   {/* Optional Ratings */}
                   <div className="space-y-4">
                     <h3 className="text-base font-semibold sm:text-lg">Optional Ratings</h3>
+                    <p className="text-sm text-muted-foreground">
+                      If you've used our service before, rate your experience
+                    </p>
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="cabRating">Cab Service Rating</Label>
-                        <StarRating
-                          id="cabRating"
-                          label="Cab Service Rating"
-                          value={formData.cabRating}
-                          onChange={(value) => handleChange('cabRating', value)}
-                        />
-                        <FieldError error={errors.cabRating} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="driverRating">Driver Service Rating</Label>
-                        <StarRating
-                          id="driverRating"
-                          label="Driver Service Rating"
-                          value={formData.driverRating}
-                          onChange={(value) => handleChange('driverRating', value)}
-                        />
-                        <FieldError error={errors.driverRating} />
-                      </div>
+                      <StarRating
+                        label="Cab Rating"
+                        id="cabRating"
+                        value={formData.cabRating}
+                        onChange={(value) => handleChange('cabRating', value)}
+                        error={errors.cabRating}
+                      />
+                      <StarRating
+                        label="Driver Rating"
+                        id="driverRating"
+                        value={formData.driverRating}
+                        onChange={(value) => handleChange('driverRating', value)}
+                        error={errors.driverRating}
+                      />
                     </div>
                   </div>
 
-                  {/* Comments */}
+                  {/* Additional Comments */}
                   <div className="space-y-2">
                     <Label htmlFor="comments">Additional Comments</Label>
                     <Textarea
                       id="comments"
                       value={formData.comments}
                       onChange={(e) => handleChange('comments', e.target.value)}
-                      placeholder="Any special requests or instructions..."
+                      placeholder="Any special requests or additional information..."
                       rows={4}
                     />
                   </div>
@@ -443,9 +432,9 @@ export default function BookCabPage() {
                   {/* Submit Button */}
                   <Button
                     type="submit"
+                    disabled={submitBooking.isPending}
                     className="w-full"
                     size="lg"
-                    disabled={submitBooking.isPending}
                   >
                     {submitBooking.isPending ? 'Submitting...' : 'Submit Booking'}
                   </Button>

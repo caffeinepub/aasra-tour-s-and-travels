@@ -1,118 +1,105 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "AASRA Cab App — Android-friendly PWA installability",
+  "title": "AASRA Driver Dispatch — Driver Assigned Bookings Inbox (Frontend)",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Add PWA install support (manifest, meta tags, and a basic service worker registration) so Android browsers can install and launch the app in standalone mode.",
-      "acceptanceCriteria": [
-        "A valid web app manifest is present and linked from the app HTML.",
-        "The manifest includes at least name, short_name, start_url, display (standalone), theme_color, background_color, and icons.",
-        "At least one 192x192 and one 512x512 app icon are available and referenced by the manifest.",
-        "The app shows as installable in a modern Android browser (e.g., Chrome) and launches in standalone mode when installed."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/index.html",
-          "operation": "modify",
-          "description": "Add required PWA-related HTML tags: link the web app manifest, set theme-color, and include Android/installed-app friendly meta tags (e.g., mobile-web-app-capable/format-detection as appropriate) to support Add to Home Screen."
-        },
-        {
-          "path": "frontend/public/manifest.webmanifest",
-          "operation": "create",
-          "description": "Create a valid web app manifest for AASRA Cab App with required fields (name, short_name, start_url, display=standalone, theme_color, background_color) and icon declarations pointing at the generated icon assets under frontend/public/assets/generated."
-        },
-        {
-          "path": "frontend/public/sw.js",
-          "operation": "create",
-          "description": "Add a minimal service worker file needed for installability checks (no push notifications; keep scope minimal and avoid complex caching beyond what is necessary for PWA install criteria)."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Register the service worker from within the React app (since frontend/src/main.tsx is immutable), ensuring registration only runs in supported browsers and does not break normal web usage."
-        }
-      ]
-    },
-    {
       "id": "REQ-2",
-      "summary": "Improve Android PWA usability by ensuring key screens are responsive, touch-friendly, and not clipped on small viewports (header navigation, booking flow, contact options, tracking, and profile).",
+      "summary": "Build a driver dispatch inbox UI to view assigned bookings, inspect details, and take status actions with validation.",
       "acceptanceCriteria": [
-        "Core pages (Home, Book a Cab, Contact, Tracking, Profile) are usable on common Android viewport widths without horizontal scrolling.",
-        "Tap targets in the header/mobile menu and primary CTAs are comfortably clickable on touch devices.",
-        "No critical UI elements are obscured by fixed/sticky UI on small screens."
+        "A driver can navigate to a dedicated dispatch screen and see only their assigned bookings.",
+        "Selecting a booking shows full details and available actions appropriate to its current status.",
+        "Refuse/Cancel actions require a non-empty reason before submission and show inline validation errors if missing.",
+        "After any status mutation, the UI refreshes using React Query invalidation so the list and details reflect the updated status."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/SiteHeader.tsx",
-          "operation": "modify",
-          "description": "Adjust mobile/desktop header interactions for touch: ensure the mobile menu trigger and key CTAs meet comfortable tap target sizing, and verify sticky header behavior does not obscure content on small screens."
+          "path": "frontend/src/pages/DriverDispatchPage.tsx",
+          "operation": "create",
+          "description": "Create the /driver/dispatch screen: authenticated driver-only inbox with an “Assigned Bookings” list (newest first from backend), a selectable detail panel, and actions (Accept, Refuse w/ required reason, Mark Completed, Cancel w/ required reason). Use the authorization component patterns to require Internet Identity authentication and to handle authorization traps gracefully in UI messaging. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/SiteLayout.tsx",
-          "operation": "modify",
-          "description": "Ensure the main content area accounts for sticky header and mobile safe areas (e.g., avoid top/bottom clipping on small Android viewports) without adding new routes."
-        },
-        {
-          "path": "frontend/src/index.css",
-          "operation": "modify",
-          "description": "Add small, global mobile-friendly adjustments (e.g., safe-area insets handling where appropriate, and preventing accidental horizontal overflow) to improve installed PWA behavior on Android."
-        },
-        {
-          "path": "frontend/src/pages/HomePage.tsx",
-          "operation": "modify",
-          "description": "Verify Home page layout remains responsive in narrow Android viewports; apply minimal class/layout tweaks if any elements overflow or CTAs become hard to tap."
-        },
-        {
-          "path": "frontend/src/pages/BookCabPage.tsx",
-          "operation": "modify",
-          "description": "Verify booking flow form controls and sections are responsive and touch-friendly on Android; adjust grid/spacing and any potential overflow areas to avoid horizontal scrolling."
-        },
-        {
-          "path": "frontend/src/pages/ContactPage.tsx",
-          "operation": "modify",
-          "description": "Verify contact option cards and WhatsApp link layout are readable and tappable on small viewports; adjust grid breakpoints/spacing if needed to prevent clipping."
-        },
-        {
-          "path": "frontend/src/pages/TrackingPage.tsx",
-          "operation": "modify",
-          "description": "Verify tracking screen (map card + details card) remains usable on narrow widths; ensure long text wraps and action buttons remain accessible without overlap from sticky UI."
-        },
-        {
-          "path": "frontend/src/pages/ProfilePage.tsx",
-          "operation": "modify",
-          "description": "Verify profile page sections (referrals, uploads, payment preferences) do not overflow horizontally and remain touch-friendly; adjust layout for small Android viewports as needed."
+          "path": "frontend/src/pages/DriverDispatchPage.tsx",
+          "operation": "create",
+          "description": "Implement inline validation using the existing FieldError component for reason-required actions and disable/guard actions based on current booking status (e.g., pending -> accept/refuse; accepted -> complete/cancel; completed/cancelled/refused -> no mutations)."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Add generated PWA icon assets as static files under frontend/public/assets/generated and reference them from the PWA manifest.",
+      "summary": "Add routing and navigation entry points for the driver dispatch workflow and quick jump to location update.",
       "acceptanceCriteria": [
-        "New icon files exist under frontend/public/assets/generated.",
-        "The manifest references the icons using correct paths and sizes."
+        "A new route exists for a driver dispatch inbox and is registered in the TanStack Router route tree.",
+        "From the dispatch booking details, the driver can navigate to the existing location update screen for that booking id.",
+        "The Profile page shows an “Open Dispatch” (or similar) button/section only when the caller has a driver profile."
       ],
       "file_operations": [
         {
-          "path": "frontend/public/assets/generated/pwa-icon-192.dim_192x192.png",
-          "operation": "create",
-          "description": "Add the generated 192x192 PWA app icon at frontend/public/assets/generated/pwa-icon-192.dim_192x192.png."
-        },
-        {
-          "path": "frontend/public/assets/generated/pwa-icon-512.dim_512x512.png",
-          "operation": "create",
-          "description": "Add the generated 512x512 PWA app icon at frontend/public/assets/generated/pwa-icon-512.dim_512x512.png."
-        },
-        {
-          "path": "frontend/public/assets/generated/pwa-maskable-512.dim_512x512.png",
-          "operation": "create",
-          "description": "Add the generated 512x512 maskable PWA app icon at frontend/public/assets/generated/pwa-maskable-512.dim_512x512.png."
-        },
-        {
-          "path": "frontend/public/manifest.webmanifest",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Reference the new icon assets from the manifest with correct src paths, sizes, and purpose (include maskable for frontend/public/assets/generated/pwa-maskable-512.dim_512x512.png)."
+          "description": "Register a new TanStack Router route for /driver/dispatch and wire it to the new DriverDispatchPage so it is reachable via navigation."
+        },
+        {
+          "path": "frontend/src/pages/ProfilePage.tsx",
+          "operation": "modify",
+          "description": "Add a driver-only “Open Dispatch” entry point that appears only when the caller has a driver profile (based on useGetCallerUserProfile). Use the authorization component patterns already used in the app (authenticated-only screens) to avoid showing dispatch entry for guests/customers. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/DriverDispatchPage.tsx",
+          "operation": "modify",
+          "description": "Wire a prominent “Update Location” navigation action in the booking details panel that routes to the existing /driver/track/$bookingId page for the selected booking."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Add React Query hooks for driver dispatch bookings and driver status updates with consistent keys and invalidation.",
+      "acceptanceCriteria": [
+        "Frontend has dedicated hooks for: (1) get assigned bookings for caller, (2) driver update booking status with optional reason.",
+        "On mutation success, relevant queries are invalidated (assigned bookings list, and any booking detail/tracking queries for the affected booking).",
+        "Hooks gracefully handle missing actor/identity similar to existing hooks (no crashes)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useDriverDispatch.ts",
+          "operation": "create",
+          "description": "Add React Query hooks: useGetDriverDispatchBookings() (calls actor.getDriverDispatchBookings) and useUpdateDriverBookingStatus() (calls actor.updateDriverBookingStatus). Match existing hook patterns (actor dependency checks, enabled flags) and use stable query keys (e.g., ['driverDispatch','bookings'])."
+        },
+        {
+          "path": "frontend/src/hooks/useDriverDispatch.ts",
+          "operation": "create",
+          "description": "On mutation success, invalidate: the dispatch list query key, existing per-booking keys (e.g., ['booking', bookingId]) and tracking keys used elsewhere (e.g., ['tracking','booking', bookingId] and ['tracking','location', bookingId]) so UI refreshes consistently after actions."
+        },
+        {
+          "path": "frontend/src/pages/DriverDispatchPage.tsx",
+          "operation": "modify",
+          "description": "Adopt the new driver dispatch hooks for data loading and actions; ensure the page does not crash when actor/identity is missing and instead shows the existing AuthRequiredScreen (authorization component patterns). Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Apply a cohesive warm/amber, mobile-first driver dispatch theme with clear status hierarchy and prominent actions.",
+      "acceptanceCriteria": [
+        "Dispatch UI is readable and usable on narrow mobile screens without horizontal scrolling.",
+        "Statuses are visually distinct (e.g., Pending/Accepted/Completed/Cancelled/Refused) using consistent badge styles.",
+        "Primary actions (Accept/Refuse/Complete/Cancel/Update Location) are visually prominent and not easily mis-tapped."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/DriverDispatchPage.tsx",
+          "operation": "modify",
+          "description": "Implement a mobile-first layout (stacked list + details on small screens; split-pane on larger screens) using existing Tailwind + shadcn/ui components (Card, Button, Badge, Alert, Skeleton). Ensure touch-friendly button sizing and spacing for Android PWA usage."
+        },
+        {
+          "path": "frontend/src/pages/DriverDispatchPage.tsx",
+          "operation": "modify",
+          "description": "Add consistent, high-contrast status badges and grouping (e.g., Pending/Accepted as active; Completed; Cancelled/Refused) using existing Badge variants and warm palette classes consistent with current app styling (as seen on TrackingPage)."
+        },
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "If needed to support the dispatch screen’s readability on narrow viewports, add minimal global utility adjustments consistent with existing mobile-friendly rules (avoid new stylesheet files). Keep changes limited and aligned with the existing warm/amber theme."
         }
       ]
     }

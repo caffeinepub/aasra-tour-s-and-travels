@@ -1,96 +1,100 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-18T13:15:29.661Z",
+  "generatedAt": "2026-02-18T13:31:47.815Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 5,
+    "implemented": 4,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Add Progressive Web App (PWA) support so the existing AASRA cab web app can be installed and used like an Android app (Add to Home Screen), including a web app manifest, required Android icon sizes, and appropriate HTML meta tags.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/index.html",
-          "frontend/public/manifest.webmanifest",
-          "frontend/public/sw.js",
-          "frontend/src/App.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/index.html",
-          "frontend/public/manifest.webmanifest",
-          "frontend/public/sw.js",
-          "frontend/src/App.tsx"
-        ]
+        "summary": "Add backend APIs to support a driver dispatch workflow: (1) allow an authenticated driver to fetch a list of bookings assigned to them, sorted by newest first, and (2) allow an assigned driver to update the status of their own booking to one of: accepted, refused, completed, or cancelled (and when cancelled/refused, store an optional reason). Enforce authorization so only the assigned driver (or admin where appropriate) can access these APIs.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Ensure the installed PWA experience works well on Android by verifying key screens are responsive and touch-friendly (header navigation, booking flow, contact options, and tracking screens) and that content is not clipped on small viewports.",
+        "summary": "Create a driver dispatch UI that lets an authenticated driver view and manage their assigned bookings: include an “Assigned Bookings” list with key details (booking id, pickup/destination, pickup time, customer name/phone, current status), a detail panel, and clear actions to Accept, Refuse (with required reason), Mark Completed, and Cancel (with required reason).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/SiteHeader.tsx",
-          "frontend/src/components/SiteLayout.tsx",
-          "frontend/src/index.css",
-          "frontend/src/pages/HomePage.tsx",
-          "frontend/src/pages/BookCabPage.tsx",
-          "frontend/src/pages/ContactPage.tsx",
-          "frontend/src/pages/TrackingPage.tsx",
-          "frontend/src/pages/ProfilePage.tsx"
+          "frontend/src/pages/DriverDispatchPage.tsx",
+          "frontend/src/pages/DriverDispatchPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/SiteHeader.tsx",
-          "frontend/src/components/SiteLayout.tsx",
-          "frontend/src/index.css",
-          "frontend/src/pages/HomePage.tsx",
-          "frontend/src/pages/BookCabPage.tsx",
-          "frontend/src/pages/ContactPage.tsx",
-          "frontend/src/pages/TrackingPage.tsx",
-          "frontend/src/pages/ProfilePage.tsx"
+          "frontend/src/pages/DriverDispatchPage.tsx",
+          "frontend/src/pages/DriverDispatchPage.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Add the generated PWA icon assets into the project as static files under frontend/public/assets/generated and reference them from the PWA manifest.",
+        "summary": "Add navigation/routes for the driver dispatch workflow: introduce a route for the dispatch inbox (e.g., /driver/dispatch) and ensure drivers can easily jump from an assigned booking to the existing location update page (/driver/track/$bookingId). Add a prominent entry point from the Profile page (driver profile) to the dispatch inbox.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/public/assets/generated/pwa-icon-192.dim_192x192.png",
-          "frontend/public/assets/generated/pwa-icon-512.dim_512x512.png",
-          "frontend/public/assets/generated/pwa-maskable-512.dim_512x512.png",
-          "frontend/public/manifest.webmanifest"
+          "frontend/src/App.tsx",
+          "frontend/src/pages/ProfilePage.tsx",
+          "frontend/src/pages/DriverDispatchPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/public/assets/generated/pwa-icon-192.dim_192x192.png",
-          "frontend/public/assets/generated/pwa-icon-512.dim_512x512.png",
-          "frontend/public/assets/generated/pwa-maskable-512.dim_512x512.png",
-          "frontend/public/manifest.webmanifest"
+          "frontend/src/App.tsx",
+          "frontend/src/pages/ProfilePage.tsx",
+          "frontend/src/pages/DriverDispatchPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Add React Query hooks for driver dispatch: provide a query hook for fetching the caller’s assigned bookings and mutation hooks for driver status updates (and reason when applicable). Ensure query keys and invalidation patterns are consistent with existing booking/tracking hooks.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useDriverDispatch.ts",
+          "frontend/src/hooks/useDriverDispatch.ts",
+          "frontend/src/pages/DriverDispatchPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useDriverDispatch.ts",
+          "frontend/src/hooks/useDriverDispatch.ts",
+          "frontend/src/pages/DriverDispatchPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Apply a cohesive driver-dispatch visual theme consistent with the app’s existing warm/amber styling: clear hierarchy for “new/active/completed” states, high-contrast status badges, and mobile-first layout that works well in the Android build.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/DriverDispatchPage.tsx",
+          "frontend/src/pages/DriverDispatchPage.tsx",
+          "frontend/src/index.css"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/DriverDispatchPage.tsx",
+          "frontend/src/pages/DriverDispatchPage.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/index.html",
-    "frontend/public/assets/generated/pwa-icon-192.dim_192x192.png",
-    "frontend/public/assets/generated/pwa-icon-512.dim_512x512.png",
-    "frontend/public/assets/generated/pwa-maskable-512.dim_512x512.png",
-    "frontend/public/manifest.webmanifest",
-    "frontend/public/sw.js",
     "frontend/src/App.tsx",
-    "frontend/src/components/SiteHeader.tsx",
-    "frontend/src/components/SiteLayout.tsx",
-    "frontend/src/index.css",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useDriverDispatch.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/hooks/useTracking.ts",
     "frontend/src/pages/BookCabPage.tsx",
-    "frontend/src/pages/ContactPage.tsx",
-    "frontend/src/pages/HomePage.tsx",
+    "frontend/src/pages/DriverDispatchPage.tsx",
     "frontend/src/pages/ProfilePage.tsx",
-    "frontend/src/pages/TrackingPage.tsx",
+    "frontend/src/pages/admin/AdminBookingsPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

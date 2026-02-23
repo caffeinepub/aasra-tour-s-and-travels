@@ -110,7 +110,45 @@ export interface RateCard {
     sedan: bigint;
     premiumSuv: bigint;
 }
-export interface BookingRequest {
+export interface ReferralBonus {
+    driverBonus: bigint;
+    customerBonus: bigint;
+}
+export interface DriverProfile {
+    cabNumber: string;
+    vehicleType: VehicleType;
+    fullName: string;
+    yearOfManufacture: bigint;
+}
+export interface BookingRequestInput {
+    destination_address: string;
+    pickup_address: string;
+    paymentMethod: string;
+    pickup_postal_code: string;
+    submit_time: bigint;
+    cab_rating?: bigint;
+    cancel_reason?: string;
+    email: string;
+    pickup_time: bigint;
+    first_name: string;
+    last_name: string;
+    comments: string;
+    phone_number: string;
+    destination_postal_code: string;
+    driver_rating?: bigint;
+}
+export interface Attachment {
+    contentType: string;
+    blob: ExternalBlob;
+    name: string;
+    uploadTime: bigint;
+}
+export interface DriverBookingUpdate {
+    status: BookingStatus;
+    bookingId: bigint;
+    reason?: string;
+}
+export interface BookingRequestView {
     id: bigint;
     destination_address: string;
     status: BookingStatus;
@@ -119,6 +157,7 @@ export interface BookingRequest {
     pickup_postal_code: string;
     submit_time: bigint;
     cab_rating?: bigint;
+    declined_by: Array<Principal>;
     cancel_reason?: string;
     email: string;
     driver_location?: Location;
@@ -131,22 +170,6 @@ export interface BookingRequest {
     destination_postal_code: string;
     driver_rating?: bigint;
     submitted_by: Principal;
-}
-export interface ReferralBonus {
-    driverBonus: bigint;
-    customerBonus: bigint;
-}
-export interface DriverProfile {
-    cabNumber: string;
-    vehicleType: VehicleType;
-    fullName: string;
-    yearOfManufacture: bigint;
-}
-export interface Attachment {
-    contentType: string;
-    blob: ExternalBlob;
-    name: string;
-    uploadTime: bigint;
 }
 export interface _CaffeineStorageRefillResult {
     success?: boolean;
@@ -200,25 +223,28 @@ export interface backendInterface {
     assignDriver(bookingId: bigint, driver: Principal): Promise<void>;
     awardReferralBonuses(bookingId: bigint, customerBonus: bigint, driverBonus: bigint): Promise<void>;
     generateReferralCode(): Promise<string>;
-    getAllBookings(): Promise<Array<BookingRequest>>;
+    getAllBookings(): Promise<Array<BookingRequestView>>;
     getAttachment(attachmentType: Variant_cab_driver, user: Principal): Promise<Attachment | null>;
-    getBooking(id: bigint): Promise<BookingRequest>;
+    getBooking(id: bigint): Promise<BookingRequestView>;
     getCallerAttachment(attachmentType: Variant_cab_driver): Promise<Attachment | null>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getDriverBookings(): Promise<Array<BookingRequestView>>;
+    getDriverDispatchBookings(): Promise<Array<BookingRequestView>>;
     getDriverLocation(bookingId: bigint): Promise<Location | null>;
     getRateCard(): Promise<RateCard>;
     getReferralBonus(): Promise<ReferralBonus | null>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
-    submitBooking(form: BookingRequest): Promise<bigint>;
+    submitBooking(form: BookingRequestInput): Promise<bigint>;
     updateBookingStatus(bookingId: bigint, statusText: string): Promise<void>;
+    updateDriverBookingStatus(update: DriverBookingUpdate): Promise<void>;
     updateDriverLocation(bookingId: bigint, location: Location): Promise<void>;
     updateRateCard(newRateCard: RateCard): Promise<void>;
     uploadAttachment(attachmentType: Variant_cab_driver, file: ExternalBlob, name: string, contentType: string): Promise<void>;
 }
-import type { Attachment as _Attachment, BookingRequest as _BookingRequest, BookingStatus as _BookingStatus, CustomerProfile as _CustomerProfile, DriverProfile as _DriverProfile, ExternalBlob as _ExternalBlob, Location as _Location, PaymentMethod as _PaymentMethod, ReferralBonus as _ReferralBonus, UserProfile as _UserProfile, UserRole as _UserRole, VehicleType as _VehicleType, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { Attachment as _Attachment, BookingRequestInput as _BookingRequestInput, BookingRequestView as _BookingRequestView, BookingStatus as _BookingStatus, CustomerProfile as _CustomerProfile, DriverBookingUpdate as _DriverBookingUpdate, DriverProfile as _DriverProfile, ExternalBlob as _ExternalBlob, Location as _Location, PaymentMethod as _PaymentMethod, ReferralBonus as _ReferralBonus, UserProfile as _UserProfile, UserRole as _UserRole, VehicleType as _VehicleType, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
@@ -389,7 +415,7 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async getAllBookings(): Promise<Array<BookingRequest>> {
+    async getAllBookings(): Promise<Array<BookingRequestView>> {
         if (this.processError) {
             try {
                 const result = await this.actor.getAllBookings();
@@ -417,18 +443,18 @@ export class Backend implements backendInterface {
             return from_candid_opt_n19(this._uploadFile, this._downloadFile, result);
         }
     }
-    async getBooking(arg0: bigint): Promise<BookingRequest> {
+    async getBooking(arg0: bigint): Promise<BookingRequestView> {
         if (this.processError) {
             try {
                 const result = await this.actor.getBooking(arg0);
-                return from_candid_BookingRequest_n11(this._uploadFile, this._downloadFile, result);
+                return from_candid_BookingRequestView_n11(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getBooking(arg0);
-            return from_candid_BookingRequest_n11(this._uploadFile, this._downloadFile, result);
+            return from_candid_BookingRequestView_n11(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCallerAttachment(arg0: Variant_cab_driver): Promise<Attachment | null> {
@@ -471,6 +497,34 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getCallerUserRole();
             return from_candid_UserRole_n35(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getDriverBookings(): Promise<Array<BookingRequestView>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getDriverBookings();
+                return from_candid_vec_n10(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getDriverBookings();
+            return from_candid_vec_n10(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getDriverDispatchBookings(): Promise<Array<BookingRequestView>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getDriverDispatchBookings();
+                return from_candid_vec_n10(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getDriverDispatchBookings();
+            return from_candid_vec_n10(this._uploadFile, this._downloadFile, result);
         }
     }
     async getDriverLocation(arg0: bigint): Promise<Location | null> {
@@ -557,17 +611,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async submitBooking(arg0: BookingRequest): Promise<bigint> {
+    async submitBooking(arg0: BookingRequestInput): Promise<bigint> {
         if (this.processError) {
             try {
-                const result = await this.actor.submitBooking(to_candid_BookingRequest_n48(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.submitBooking(to_candid_BookingRequestInput_n48(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.submitBooking(to_candid_BookingRequest_n48(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.submitBooking(to_candid_BookingRequestInput_n48(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
@@ -582,6 +636,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.updateBookingStatus(arg0, arg1);
+            return result;
+        }
+    }
+    async updateDriverBookingStatus(arg0: DriverBookingUpdate): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateDriverBookingStatus(to_candid_DriverBookingUpdate_n50(this._uploadFile, this._downloadFile, arg0));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateDriverBookingStatus(to_candid_DriverBookingUpdate_n50(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
@@ -616,14 +684,14 @@ export class Backend implements backendInterface {
     async uploadAttachment(arg0: Variant_cab_driver, arg1: ExternalBlob, arg2: string, arg3: string): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.uploadAttachment(to_candid_variant_n18(this._uploadFile, this._downloadFile, arg0), await to_candid_ExternalBlob_n52(this._uploadFile, this._downloadFile, arg1), arg2, arg3);
+                const result = await this.actor.uploadAttachment(to_candid_variant_n18(this._uploadFile, this._downloadFile, arg0), await to_candid_ExternalBlob_n54(this._uploadFile, this._downloadFile, arg1), arg2, arg3);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.uploadAttachment(to_candid_variant_n18(this._uploadFile, this._downloadFile, arg0), await to_candid_ExternalBlob_n52(this._uploadFile, this._downloadFile, arg1), arg2, arg3);
+            const result = await this.actor.uploadAttachment(to_candid_variant_n18(this._uploadFile, this._downloadFile, arg0), await to_candid_ExternalBlob_n54(this._uploadFile, this._downloadFile, arg1), arg2, arg3);
             return result;
         }
     }
@@ -631,7 +699,7 @@ export class Backend implements backendInterface {
 async function from_candid_Attachment_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Attachment): Promise<Attachment> {
     return await from_candid_record_n21(_uploadFile, _downloadFile, value);
 }
-function from_candid_BookingRequest_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _BookingRequest): BookingRequest {
+function from_candid_BookingRequestView_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _BookingRequestView): BookingRequestView {
     return from_candid_record_n12(_uploadFile, _downloadFile, value);
 }
 function from_candid_BookingStatus_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _BookingStatus): BookingStatus {
@@ -697,6 +765,7 @@ function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise<Uin
     pickup_postal_code: string;
     submit_time: bigint;
     cab_rating: [] | [bigint];
+    declined_by: Array<Principal>;
     cancel_reason: [] | [string];
     email: string;
     driver_location: [] | [_Location];
@@ -718,6 +787,7 @@ function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise<Uin
     pickup_postal_code: string;
     submit_time: bigint;
     cab_rating?: bigint;
+    declined_by: Array<Principal>;
     cancel_reason?: string;
     email: string;
     driver_location?: Location;
@@ -740,6 +810,7 @@ function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise<Uin
         pickup_postal_code: value.pickup_postal_code,
         submit_time: value.submit_time,
         cab_rating: record_opt_to_undefined(from_candid_opt_n7(_uploadFile, _downloadFile, value.cab_rating)),
+        declined_by: value.declined_by,
         cancel_reason: record_opt_to_undefined(from_candid_opt_n15(_uploadFile, _downloadFile, value.cancel_reason)),
         email: value.email,
         driver_location: record_opt_to_undefined(from_candid_opt_n16(_uploadFile, _downloadFile, value.driver_location)),
@@ -877,22 +948,25 @@ function from_candid_variant_n36(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): UserRole {
     return "admin" in value ? UserRole.admin : "user" in value ? UserRole.user : "guest" in value ? UserRole.guest : value;
 }
-function from_candid_vec_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_BookingRequest>): Array<BookingRequest> {
-    return value.map((x)=>from_candid_BookingRequest_n11(_uploadFile, _downloadFile, x));
+function from_candid_vec_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_BookingRequestView>): Array<BookingRequestView> {
+    return value.map((x)=>from_candid_BookingRequestView_n11(_uploadFile, _downloadFile, x));
 }
-function to_candid_BookingRequest_n48(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: BookingRequest): _BookingRequest {
+function to_candid_BookingRequestInput_n48(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: BookingRequestInput): _BookingRequestInput {
     return to_candid_record_n49(_uploadFile, _downloadFile, value);
 }
-function to_candid_BookingStatus_n50(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: BookingStatus): _BookingStatus {
-    return to_candid_variant_n51(_uploadFile, _downloadFile, value);
+function to_candid_BookingStatus_n52(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: BookingStatus): _BookingStatus {
+    return to_candid_variant_n53(_uploadFile, _downloadFile, value);
 }
 function to_candid_CustomerProfile_n44(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: CustomerProfile): _CustomerProfile {
     return to_candid_record_n45(_uploadFile, _downloadFile, value);
 }
+function to_candid_DriverBookingUpdate_n50(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: DriverBookingUpdate): _DriverBookingUpdate {
+    return to_candid_record_n51(_uploadFile, _downloadFile, value);
+}
 function to_candid_DriverProfile_n40(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: DriverProfile): _DriverProfile {
     return to_candid_record_n41(_uploadFile, _downloadFile, value);
 }
-async function to_candid_ExternalBlob_n52(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob): Promise<_ExternalBlob> {
+async function to_candid_ExternalBlob_n54(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob): Promise<_ExternalBlob> {
     return await _uploadFile(value);
 }
 function to_candid_PaymentMethod_n46(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: PaymentMethod): _PaymentMethod {
@@ -953,9 +1027,7 @@ function to_candid_record_n45(_uploadFile: (file: ExternalBlob) => Promise<Uint8
     };
 }
 function to_candid_record_n49(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    id: bigint;
     destination_address: string;
-    status: BookingStatus;
     pickup_address: string;
     paymentMethod: string;
     pickup_postal_code: string;
@@ -963,20 +1035,15 @@ function to_candid_record_n49(_uploadFile: (file: ExternalBlob) => Promise<Uint8
     cab_rating?: bigint;
     cancel_reason?: string;
     email: string;
-    driver_location?: Location;
     pickup_time: bigint;
-    assigned_driver?: Principal;
     first_name: string;
     last_name: string;
     comments: string;
     phone_number: string;
     destination_postal_code: string;
     driver_rating?: bigint;
-    submitted_by: Principal;
 }): {
-    id: bigint;
     destination_address: string;
-    status: _BookingStatus;
     pickup_address: string;
     paymentMethod: string;
     pickup_postal_code: string;
@@ -984,21 +1051,16 @@ function to_candid_record_n49(_uploadFile: (file: ExternalBlob) => Promise<Uint8
     cab_rating: [] | [bigint];
     cancel_reason: [] | [string];
     email: string;
-    driver_location: [] | [_Location];
     pickup_time: bigint;
-    assigned_driver: [] | [Principal];
     first_name: string;
     last_name: string;
     comments: string;
     phone_number: string;
     destination_postal_code: string;
     driver_rating: [] | [bigint];
-    submitted_by: Principal;
 } {
     return {
-        id: value.id,
         destination_address: value.destination_address,
-        status: to_candid_BookingStatus_n50(_uploadFile, _downloadFile, value.status),
         pickup_address: value.pickup_address,
         paymentMethod: value.paymentMethod,
         pickup_postal_code: value.pickup_postal_code,
@@ -1006,16 +1068,28 @@ function to_candid_record_n49(_uploadFile: (file: ExternalBlob) => Promise<Uint8
         cab_rating: value.cab_rating ? candid_some(value.cab_rating) : candid_none(),
         cancel_reason: value.cancel_reason ? candid_some(value.cancel_reason) : candid_none(),
         email: value.email,
-        driver_location: value.driver_location ? candid_some(value.driver_location) : candid_none(),
         pickup_time: value.pickup_time,
-        assigned_driver: value.assigned_driver ? candid_some(value.assigned_driver) : candid_none(),
         first_name: value.first_name,
         last_name: value.last_name,
         comments: value.comments,
         phone_number: value.phone_number,
         destination_postal_code: value.destination_postal_code,
-        driver_rating: value.driver_rating ? candid_some(value.driver_rating) : candid_none(),
-        submitted_by: value.submitted_by
+        driver_rating: value.driver_rating ? candid_some(value.driver_rating) : candid_none()
+    };
+}
+function to_candid_record_n51(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    status: BookingStatus;
+    bookingId: bigint;
+    reason?: string;
+}): {
+    status: _BookingStatus;
+    bookingId: bigint;
+    reason: [] | [string];
+} {
+    return {
+        status: to_candid_BookingStatus_n52(_uploadFile, _downloadFile, value.status),
+        bookingId: value.bookingId,
+        reason: value.reason ? candid_some(value.reason) : candid_none()
     };
 }
 function to_candid_variant_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Variant_cab_driver): {
@@ -1084,7 +1158,7 @@ function to_candid_variant_n47(_uploadFile: (file: ExternalBlob) => Promise<Uint
         debitCard: null
     } : value;
 }
-function to_candid_variant_n51(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: BookingStatus): {
+function to_candid_variant_n53(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: BookingStatus): {
     cancelled: null;
 } | {
     pending: null;

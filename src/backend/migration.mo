@@ -1,62 +1,87 @@
 import Map "mo:core/Map";
-import Principal "mo:core/Principal";
 import Nat "mo:core/Nat";
+import List "mo:core/List";
 
 module {
-  // Old types (without preferredPaymentMethod)
-  type OldCustomerProfile = {
-    name : Text;
-  };
-
-  type OldUserProfile = {
-    #customer : OldCustomerProfile;
-    #driver : {
-      fullName : Text;
-      cabNumber : Text;
-      vehicleType : { #mini; #sedan; #suv; #premiumSuv };
-      yearOfManufacture : Nat;
+  type OldBookingRequest = {
+    id : Nat;
+    first_name : Text;
+    last_name : Text;
+    email : Text;
+    phone_number : Text;
+    pickup_address : Text;
+    pickup_postal_code : Text;
+    destination_address : Text;
+    destination_postal_code : Text;
+    pickup_time : Nat;
+    comments : Text;
+    status : {
+      #pending;
+      #accepted;
+      #completed;
+      #cancelled;
+      #refused;
+    };
+    paymentMethod : Text;
+    submitted_by : Principal;
+    cancel_reason : ?Text;
+    submit_time : Int;
+    driver_rating : ?Nat;
+    cab_rating : ?Nat;
+    assigned_driver : ?Principal;
+    driver_location : ?{
+      latitude : Float;
+      longitude : Float;
     };
   };
 
   type OldActor = {
-    userProfiles : Map.Map<Principal, OldUserProfile>;
+    bookingRequests : Map.Map<Nat, OldBookingRequest>;
   };
 
-  // New types (with preferredPaymentMethod)
-  type NewCustomerProfile = {
-    name : Text;
-    preferredPaymentMethod : ?{ #cash; #UPI; #creditCard; #debitCard };
-  };
-
-  type NewUserProfile = {
-    #customer : NewCustomerProfile;
-    #driver : {
-      fullName : Text;
-      cabNumber : Text;
-      vehicleType : { #mini; #sedan; #suv; #premiumSuv };
-      yearOfManufacture : Nat;
+  type NewBookingRequest = {
+    id : Nat;
+    first_name : Text;
+    last_name : Text;
+    email : Text;
+    phone_number : Text;
+    pickup_address : Text;
+    pickup_postal_code : Text;
+    destination_address : Text;
+    destination_postal_code : Text;
+    pickup_time : Nat;
+    comments : Text;
+    status : {
+      #pending;
+      #accepted;
+      #completed;
+      #cancelled;
+      #refused;
     };
+    paymentMethod : Text;
+    submitted_by : Principal;
+    cancel_reason : ?Text;
+    submit_time : Int;
+    driver_rating : ?Nat;
+    cab_rating : ?Nat;
+    assigned_driver : ?Principal;
+    driver_location : ?{
+      latitude : Float;
+      longitude : Float;
+    };
+    declined_by : List.List<Principal>;
   };
 
   type NewActor = {
-    userProfiles : Map.Map<Principal, NewUserProfile>;
+    bookingRequests : Map.Map<Nat, NewBookingRequest>;
   };
 
   public func run(old : OldActor) : NewActor {
-    let newUserProfiles = old.userProfiles.map<Principal, OldUserProfile, NewUserProfile>(
-      func(_id, oldProfile) {
-        switch (oldProfile) {
-          case (#customer(oldCustomer)) {
-            #customer({
-              name = oldCustomer.name;
-              preferredPaymentMethod = null; // Default to null for existing users
-            });
-          };
-          case (#driver(driver)) { #driver(driver) };
-        };
+    let newBookings = old.bookingRequests.map<Nat, OldBookingRequest, NewBookingRequest>(
+      func(_id, oldBooking) {
+        { oldBooking with declined_by = List.empty<Principal>() };
       }
     );
-    { userProfiles = newUserProfiles };
+    { bookingRequests = newBookings };
   };
 };
-

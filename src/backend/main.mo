@@ -4,6 +4,7 @@ import Runtime "mo:core/Runtime";
 import Time "mo:core/Time";
 import Nat "mo:core/Nat";
 import Iter "mo:core/Iter";
+import List "mo:core/List";
 import Array "mo:core/Array";
 import Text "mo:core/Text";
 import Order "mo:core/Order";
@@ -11,9 +12,9 @@ import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import Storage "blob-storage/Storage";
 import MixinStorage "blob-storage/Mixin";
+import Migration "migration";
 
-
-
+(with migration = Migration.run)
 actor {
   include MixinStorage();
   public type UserRole = AccessControl.UserRole;
@@ -40,7 +41,6 @@ actor {
     };
   };
 
-  // User Profile Model
   public type CustomerProfile = {
     name : Text;
     preferredPaymentMethod : ?PaymentMethod;
@@ -60,7 +60,6 @@ actor {
 
   let userProfiles = Map.empty<Principal, UserProfile>();
 
-  // Attachments Model
   public type Attachment = {
     blob : Storage.ExternalBlob;
     name : Text;
@@ -71,7 +70,6 @@ actor {
   let driverAttachments = Map.empty<Principal, Attachment>();
   let cabAttachments = Map.empty<Principal, Attachment>();
 
-  // User Profile API
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access profiles");
@@ -93,7 +91,6 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  // Attachments API
   public shared ({ caller }) func uploadAttachment(
     attachmentType : { #cab; #driver },
     file : Storage.ExternalBlob,
@@ -144,7 +141,6 @@ actor {
     };
   };
 
-  // Booking Request Model
   public type BookingStatus = {
     #pending;
     #accepted;
@@ -165,6 +161,58 @@ actor {
       };
     };
   };
+
+  // BookingRequestInput: Immutable type for input, eliminates mutable types from API
+  public type BookingRequestInput = {
+    first_name : Text;
+    last_name : Text;
+    email : Text;
+    phone_number : Text;
+    pickup_address : Text;
+    pickup_postal_code : Text;
+    destination_address : Text;
+    destination_postal_code : Text;
+    pickup_time : Nat;
+    comments : Text;
+    paymentMethod : Text;
+    cancel_reason : ?Text;
+    submit_time : Int;
+    driver_rating : ?Nat;
+    cab_rating : ?Nat;
+  };
+
+  public type BookingRequestView = {
+    id : Nat;
+    first_name : Text;
+    last_name : Text;
+    email : Text;
+    phone_number : Text;
+    pickup_address : Text;
+    pickup_postal_code : Text;
+    destination_address : Text;
+    destination_postal_code : Text;
+    pickup_time : Nat;
+    comments : Text;
+    status : BookingStatus;
+    paymentMethod : Text;
+    submitted_by : Principal;
+    cancel_reason : ?Text;
+    submit_time : Int;
+    driver_rating : ?Nat;
+    cab_rating : ?Nat;
+    assigned_driver : ?Principal;
+    driver_location : ?Location;
+    declined_by : [Principal]; // immutable view
+  };
+
+  module BookingRequestView {
+    public func compareBookingRequestsById(a : BookingRequestView, b : BookingRequestView) : Order.Order {
+      Nat.compare(b.id, a.id);
+    };
+  };
+
+  let bookingRequests = Map.empty<Nat, BookingRequest>();
+  var nextBookingId = 0;
 
   public type BookingRequest = {
     id : Nat;
@@ -187,18 +235,9 @@ actor {
     cab_rating : ?Nat;
     assigned_driver : ?Principal;
     driver_location : ?Location;
+    declined_by : List.List<Principal>; // internal mutable state
   };
 
-  module BookingRequest {
-    public func compareBookingRequestsById(a : BookingRequest, b : BookingRequest) : Order.Order {
-      Nat.compare(b.id, a.id);
-    };
-  };
-
-  let bookingRequests = Map.empty<Nat, BookingRequest>();
-  var nextBookingId = 0;
-
-  // Vehicle Types
   public type VehicleType = {
     #mini;
     #sedan;
@@ -218,7 +257,6 @@ actor {
     };
   };
 
-  // Rate Card Model
   public type RateCard = {
     mini : Nat;
     sedan : Nat;
@@ -226,7 +264,6 @@ actor {
     premiumSuv : Nat;
   };
 
-  // Initialize with default rate card values
   var rateCard : RateCard = {
     mini = 15;
     sedan = 18;
@@ -234,8 +271,7 @@ actor {
     premiumSuv = 30;
   };
 
-  // Booking API
-  public shared ({ caller }) func submitBooking(form : BookingRequest) : async Nat {
+  public shared ({ caller }) func submitBooking(form : BookingRequestInput) : async Nat {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can submit bookings");
     };
@@ -261,44 +297,49 @@ actor {
       cab_rating = form.cab_rating;
       assigned_driver = null;
       driver_location = null;
+      declined_by = List.empty<Principal>();
     };
     bookingRequests.add(id, booking);
     nextBookingId += 1;
     id;
   };
 
-  public query ({ caller }) func getAllBookings() : async [BookingRequest] {
+  func toBookingRequestView(booking : BookingRequest) : BookingRequestView {
+    let declinedByArray = booking.declined_by.toArray();
+    {
+      booking with
+      declined_by = declinedByArray;
+    };
+  };
+
+  public query ({ caller }) func getAllBookings() : async [BookingRequestView] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can view all booking requests");
     };
-    bookingRequests.values().toArray().sort(BookingRequest.compareBookingRequestsById);
+    let bookingsArray = bookingRequests.values().toArray();
+    bookingsArray.map(func(b) { toBookingRequestView(b) }).sort(BookingRequestView.compareBookingRequestsById);
   };
 
-  public query ({ caller }) func getBooking(id : Nat) : async BookingRequest {
+  public query ({ caller }) func getBooking(id : Nat) : async BookingRequestView {
     switch (bookingRequests.get(id)) {
       case (?booking) {
         if (caller != booking.submitted_by and not AccessControl.isAdmin(accessControlState, caller)) {
           Runtime.trap("Unauthorized: Can only view your own bookings or must be admin");
         };
-        booking;
+        toBookingRequestView(booking);
       };
       case (null) { Runtime.trap("Booking request not found for id " # id.toText()) };
     };
   };
 
-  // Admin assign driver
   public shared ({ caller }) func assignDriver(bookingId : Nat, driver : Principal) : async () {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can assign drivers");
     };
-
-    // Verify that the assigned principal has a driver profile
     switch (userProfiles.get(driver)) {
       case (?profile) {
         switch (profile) {
-          case (#driver(_)) {
-            // Valid driver profile, proceed with assignment
-          };
+          case (#driver(_)) { };
           case (#customer(_)) {
             Runtime.trap("Unauthorized: Cannot assign a customer as a driver");
           };
@@ -308,7 +349,6 @@ actor {
         Runtime.trap("Unauthorized: Cannot assign a user without a driver profile");
       };
     };
-
     switch (bookingRequests.get(bookingId)) {
       case (?booking) {
         let updatedBooking = {
@@ -327,11 +367,9 @@ actor {
     longitude : Float;
   };
 
-  // Driver location update
   public shared ({ caller }) func updateDriverLocation(bookingId : Nat, location : Location) : async () {
     switch (bookingRequests.get(bookingId)) {
       case (?booking) {
-        // Allow assigned driver or admin to update location
         if (booking.assigned_driver == ?caller or AccessControl.isAdmin(accessControlState, caller)) {
           let updatedBooking = {
             booking with
@@ -346,11 +384,9 @@ actor {
     };
   };
 
-  // Get driver location
   public query ({ caller }) func getDriverLocation(bookingId : Nat) : async ?Location {
     switch (bookingRequests.get(bookingId)) {
       case (?booking) {
-        // Allow customer, assigned driver, or admin to view location
         if (caller == booking.submitted_by or booking.assigned_driver == ?caller or AccessControl.isAdmin(accessControlState, caller)) {
           booking.driver_location;
         } else {
@@ -361,7 +397,6 @@ actor {
     };
   };
 
-  // Change booking status
   public shared ({ caller }) func updateBookingStatus(bookingId : Nat, statusText : Text) : async () {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can update booking status");
@@ -380,7 +415,6 @@ actor {
     };
   };
 
-  // Rate Card API (Admin Only)
   public query ({ caller }) func getRateCard() : async RateCard {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can view the rate card");
@@ -395,7 +429,6 @@ actor {
     rateCard := newRateCard;
   };
 
-  // Referral System
   public type ReferralBonus = {
     customerBonus : Nat;
     driverBonus : Nat;
@@ -403,9 +436,8 @@ actor {
 
   let referralBonuses = Map.empty<Principal, ReferralBonus>();
   let referralCodes = Map.empty<Text, Principal>();
-  let appliedReferrals = Map.empty<Principal, Principal>(); // Maps referred user -> referrer
+  let appliedReferrals = Map.empty<Principal, Principal>();
 
-  // Referral API
   public shared ({ caller }) func generateReferralCode() : async Text {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can generate referral codes");
@@ -421,14 +453,11 @@ actor {
       Runtime.trap("Unauthorized: Only users can apply referral codes");
     };
 
-    // Check if user has already applied a referral code
     switch (appliedReferrals.get(caller)) {
       case (?_) {
         Runtime.trap("Unauthorized: You have already applied a referral code");
       };
-      case (null) {
-        // User hasn't applied a code yet, proceed
-      };
+      case (null) { };
     };
 
     switch (referralCodes.get(code)) {
@@ -437,14 +466,12 @@ actor {
           Runtime.trap("Unauthorized: Cannot use your own referral code");
         };
 
-        // Record that this user has applied a referral code
         appliedReferrals.add(caller, referrer);
       };
       case (null) { Runtime.trap("Invalid referral code") };
     };
   };
 
-  // Admin-only API to award referral bonuses
   public shared ({ caller }) func awardReferralBonuses(
     bookingId : Nat,
     customerBonus : Nat,
@@ -458,10 +485,8 @@ actor {
       case (?booking) {
         let referredUser = booking.submitted_by;
 
-        // Check if this user was referred by someone
         switch (appliedReferrals.get(referredUser)) {
           case (?referrer) {
-            // Award bonus to the referrer
             let referrerCurrentBonus = switch (referralBonuses.get(referrer)) {
               case (?bonus) { bonus };
               case (null) {
@@ -479,7 +504,6 @@ actor {
 
             referralBonuses.add(referrer, referrerUpdatedBonus);
 
-            // Award bonus to the referred user
             let referredCurrentBonus = switch (referralBonuses.get(referredUser)) {
               case (?bonus) { bonus };
               case (null) {
@@ -497,9 +521,7 @@ actor {
 
             referralBonuses.add(referredUser, referredUpdatedBonus);
           };
-          case (null) {
-            // User wasn't referred, no bonuses to award
-          };
+          case (null) { };
         };
       };
       case (null) { Runtime.trap("Booking not found for id " # bookingId.toText()) };
@@ -511,5 +533,85 @@ actor {
       Runtime.trap("Unauthorized: Only users can view their referral bonuses");
     };
     referralBonuses.get(caller);
+  };
+
+  public type DriverBookingUpdate = {
+    bookingId : Nat;
+    status : BookingStatus;
+    reason : ?Text;
+  };
+
+  public query ({ caller }) func getDriverDispatchBookings() : async [BookingRequestView] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can view dispatch bookings");
+    };
+    let driverBookings = List.empty<BookingRequest>();
+    for (booking in bookingRequests.values()) {
+      switch (booking.assigned_driver) {
+        case (?driver) {
+          if (driver == caller) {
+            driverBookings.add(booking);
+          };
+        };
+        case (null) {};
+      };
+    };
+    let driverBookingsArray = driverBookings.toArray().map(func(b) { toBookingRequestView(b) });
+    driverBookingsArray.sort(BookingRequestView.compareBookingRequestsById);
+  };
+
+  public query ({ caller }) func getDriverBookings() : async [BookingRequestView] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can view their bookings");
+    };
+    let driverBookings = List.empty<BookingRequest>();
+    for (booking in bookingRequests.values()) {
+      switch (booking.assigned_driver) {
+        case (?driver) {
+          if (driver == caller) {
+            driverBookings.add(booking);
+          };
+        };
+        case (null) {};
+      };
+    };
+    let driverBookingsArray = driverBookings.toArray().map(func(b) { toBookingRequestView(b) });
+    driverBookingsArray.sort(BookingRequestView.compareBookingRequestsById);
+  };
+
+  public shared ({ caller }) func updateDriverBookingStatus(update : DriverBookingUpdate) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can update booking status");
+    };
+    switch (update.status) {
+      case (#accepted) {};
+      case (#refused) {};
+      case (#completed) {};
+      case (#cancelled) {};
+      case (_) {
+        Runtime.trap("Invalid status: Drivers can only set status to accepted, refused, completed, or cancelled");
+      };
+    };
+
+    switch (bookingRequests.get(update.bookingId)) {
+      case (?booking) {
+        let isAssignedDriver = switch (booking.assigned_driver) {
+          case (?driver) { driver == caller };
+          case (null) { false };
+        };
+
+        if (not isAssignedDriver and not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: Only the assigned driver or admin can update this booking");
+        };
+
+        let updatedBooking = {
+          booking with
+          status = update.status;
+          cancel_reason = update.reason;
+        };
+        bookingRequests.add(update.bookingId, updatedBooking);
+      };
+      case (null) { Runtime.trap("Booking request not found for id " # update.bookingId.toText()) };
+    };
   };
 };

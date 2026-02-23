@@ -35,7 +35,7 @@ export const Location = IDL.Record({
   'latitude' : IDL.Float64,
   'longitude' : IDL.Float64,
 });
-export const BookingRequest = IDL.Record({
+export const BookingRequestView = IDL.Record({
   'id' : IDL.Nat,
   'destination_address' : IDL.Text,
   'status' : BookingStatus,
@@ -44,6 +44,7 @@ export const BookingRequest = IDL.Record({
   'pickup_postal_code' : IDL.Text,
   'submit_time' : IDL.Int,
   'cab_rating' : IDL.Opt(IDL.Nat),
+  'declined_by' : IDL.Vec(IDL.Principal),
   'cancel_reason' : IDL.Opt(IDL.Text),
   'email' : IDL.Text,
   'driver_location' : IDL.Opt(Location),
@@ -100,6 +101,28 @@ export const ReferralBonus = IDL.Record({
   'driverBonus' : IDL.Nat,
   'customerBonus' : IDL.Nat,
 });
+export const BookingRequestInput = IDL.Record({
+  'destination_address' : IDL.Text,
+  'pickup_address' : IDL.Text,
+  'paymentMethod' : IDL.Text,
+  'pickup_postal_code' : IDL.Text,
+  'submit_time' : IDL.Int,
+  'cab_rating' : IDL.Opt(IDL.Nat),
+  'cancel_reason' : IDL.Opt(IDL.Text),
+  'email' : IDL.Text,
+  'pickup_time' : IDL.Nat,
+  'first_name' : IDL.Text,
+  'last_name' : IDL.Text,
+  'comments' : IDL.Text,
+  'phone_number' : IDL.Text,
+  'destination_postal_code' : IDL.Text,
+  'driver_rating' : IDL.Opt(IDL.Nat),
+});
+export const DriverBookingUpdate = IDL.Record({
+  'status' : BookingStatus,
+  'bookingId' : IDL.Nat,
+  'reason' : IDL.Opt(IDL.Text),
+});
 
 export const idlService = IDL.Service({
   '_caffeineStorageBlobIsLive' : IDL.Func(
@@ -134,13 +157,13 @@ export const idlService = IDL.Service({
   'assignDriver' : IDL.Func([IDL.Nat, IDL.Principal], [], []),
   'awardReferralBonuses' : IDL.Func([IDL.Nat, IDL.Nat, IDL.Nat], [], []),
   'generateReferralCode' : IDL.Func([], [IDL.Text], []),
-  'getAllBookings' : IDL.Func([], [IDL.Vec(BookingRequest)], ['query']),
+  'getAllBookings' : IDL.Func([], [IDL.Vec(BookingRequestView)], ['query']),
   'getAttachment' : IDL.Func(
       [IDL.Variant({ 'cab' : IDL.Null, 'driver' : IDL.Null }), IDL.Principal],
       [IDL.Opt(Attachment)],
       ['query'],
     ),
-  'getBooking' : IDL.Func([IDL.Nat], [BookingRequest], ['query']),
+  'getBooking' : IDL.Func([IDL.Nat], [BookingRequestView], ['query']),
   'getCallerAttachment' : IDL.Func(
       [IDL.Variant({ 'cab' : IDL.Null, 'driver' : IDL.Null })],
       [IDL.Opt(Attachment)],
@@ -148,6 +171,12 @@ export const idlService = IDL.Service({
     ),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getDriverBookings' : IDL.Func([], [IDL.Vec(BookingRequestView)], ['query']),
+  'getDriverDispatchBookings' : IDL.Func(
+      [],
+      [IDL.Vec(BookingRequestView)],
+      ['query'],
+    ),
   'getDriverLocation' : IDL.Func([IDL.Nat], [IDL.Opt(Location)], ['query']),
   'getRateCard' : IDL.Func([], [RateCard], ['query']),
   'getReferralBonus' : IDL.Func([], [IDL.Opt(ReferralBonus)], ['query']),
@@ -158,8 +187,9 @@ export const idlService = IDL.Service({
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-  'submitBooking' : IDL.Func([BookingRequest], [IDL.Nat], []),
+  'submitBooking' : IDL.Func([BookingRequestInput], [IDL.Nat], []),
   'updateBookingStatus' : IDL.Func([IDL.Nat, IDL.Text], [], []),
+  'updateDriverBookingStatus' : IDL.Func([DriverBookingUpdate], [], []),
   'updateDriverLocation' : IDL.Func([IDL.Nat, Location], [], []),
   'updateRateCard' : IDL.Func([RateCard], [], []),
   'uploadAttachment' : IDL.Func(
@@ -204,7 +234,7 @@ export const idlFactory = ({ IDL }) => {
     'latitude' : IDL.Float64,
     'longitude' : IDL.Float64,
   });
-  const BookingRequest = IDL.Record({
+  const BookingRequestView = IDL.Record({
     'id' : IDL.Nat,
     'destination_address' : IDL.Text,
     'status' : BookingStatus,
@@ -213,6 +243,7 @@ export const idlFactory = ({ IDL }) => {
     'pickup_postal_code' : IDL.Text,
     'submit_time' : IDL.Int,
     'cab_rating' : IDL.Opt(IDL.Nat),
+    'declined_by' : IDL.Vec(IDL.Principal),
     'cancel_reason' : IDL.Opt(IDL.Text),
     'email' : IDL.Text,
     'driver_location' : IDL.Opt(Location),
@@ -269,6 +300,28 @@ export const idlFactory = ({ IDL }) => {
     'driverBonus' : IDL.Nat,
     'customerBonus' : IDL.Nat,
   });
+  const BookingRequestInput = IDL.Record({
+    'destination_address' : IDL.Text,
+    'pickup_address' : IDL.Text,
+    'paymentMethod' : IDL.Text,
+    'pickup_postal_code' : IDL.Text,
+    'submit_time' : IDL.Int,
+    'cab_rating' : IDL.Opt(IDL.Nat),
+    'cancel_reason' : IDL.Opt(IDL.Text),
+    'email' : IDL.Text,
+    'pickup_time' : IDL.Nat,
+    'first_name' : IDL.Text,
+    'last_name' : IDL.Text,
+    'comments' : IDL.Text,
+    'phone_number' : IDL.Text,
+    'destination_postal_code' : IDL.Text,
+    'driver_rating' : IDL.Opt(IDL.Nat),
+  });
+  const DriverBookingUpdate = IDL.Record({
+    'status' : BookingStatus,
+    'bookingId' : IDL.Nat,
+    'reason' : IDL.Opt(IDL.Text),
+  });
   
   return IDL.Service({
     '_caffeineStorageBlobIsLive' : IDL.Func(
@@ -303,13 +356,13 @@ export const idlFactory = ({ IDL }) => {
     'assignDriver' : IDL.Func([IDL.Nat, IDL.Principal], [], []),
     'awardReferralBonuses' : IDL.Func([IDL.Nat, IDL.Nat, IDL.Nat], [], []),
     'generateReferralCode' : IDL.Func([], [IDL.Text], []),
-    'getAllBookings' : IDL.Func([], [IDL.Vec(BookingRequest)], ['query']),
+    'getAllBookings' : IDL.Func([], [IDL.Vec(BookingRequestView)], ['query']),
     'getAttachment' : IDL.Func(
         [IDL.Variant({ 'cab' : IDL.Null, 'driver' : IDL.Null }), IDL.Principal],
         [IDL.Opt(Attachment)],
         ['query'],
       ),
-    'getBooking' : IDL.Func([IDL.Nat], [BookingRequest], ['query']),
+    'getBooking' : IDL.Func([IDL.Nat], [BookingRequestView], ['query']),
     'getCallerAttachment' : IDL.Func(
         [IDL.Variant({ 'cab' : IDL.Null, 'driver' : IDL.Null })],
         [IDL.Opt(Attachment)],
@@ -317,6 +370,16 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getDriverBookings' : IDL.Func(
+        [],
+        [IDL.Vec(BookingRequestView)],
+        ['query'],
+      ),
+    'getDriverDispatchBookings' : IDL.Func(
+        [],
+        [IDL.Vec(BookingRequestView)],
+        ['query'],
+      ),
     'getDriverLocation' : IDL.Func([IDL.Nat], [IDL.Opt(Location)], ['query']),
     'getRateCard' : IDL.Func([], [RateCard], ['query']),
     'getReferralBonus' : IDL.Func([], [IDL.Opt(ReferralBonus)], ['query']),
@@ -327,8 +390,9 @@ export const idlFactory = ({ IDL }) => {
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-    'submitBooking' : IDL.Func([BookingRequest], [IDL.Nat], []),
+    'submitBooking' : IDL.Func([BookingRequestInput], [IDL.Nat], []),
     'updateBookingStatus' : IDL.Func([IDL.Nat, IDL.Text], [], []),
+    'updateDriverBookingStatus' : IDL.Func([DriverBookingUpdate], [], []),
     'updateDriverLocation' : IDL.Func([IDL.Nat, Location], [], []),
     'updateRateCard' : IDL.Func([RateCard], [], []),
     'uploadAttachment' : IDL.Func(

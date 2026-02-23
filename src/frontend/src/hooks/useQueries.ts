@@ -1,12 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { BookingRequest, RateCard } from '../backend';
+import type { BookingRequestView, BookingRequestInput, RateCard } from '../backend';
 import { Principal } from '@icp-sdk/core/principal';
 
 export function useGetAllBookings() {
   const { actor, isFetching } = useActor();
 
-  return useQuery<BookingRequest[]>({
+  return useQuery<BookingRequestView[]>({
     queryKey: ['bookings'],
     queryFn: async () => {
       if (!actor) return [];
@@ -19,7 +19,7 @@ export function useGetAllBookings() {
 export function useGetBooking(id: bigint | null) {
   const { actor, isFetching } = useActor();
 
-  return useQuery<BookingRequest | null>({
+  return useQuery<BookingRequestView | null>({
     queryKey: ['booking', id?.toString()],
     queryFn: async () => {
       if (!actor || !id) return null;
@@ -34,7 +34,7 @@ export function useSubmitBooking() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (form: BookingRequest) => {
+    mutationFn: async (form: BookingRequestInput) => {
       if (!actor) throw new Error('Actor not available');
       return actor.submitBooking(form);
     },

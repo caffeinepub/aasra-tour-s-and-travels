@@ -15,6 +15,7 @@ import AdminBookingsPage from './pages/admin/AdminBookingsPage';
 import ProfilePage from './pages/ProfilePage';
 import TrackingPage from './pages/TrackingPage';
 import DriverLocationUpdatePage from './pages/DriverLocationUpdatePage';
+import DriverDispatchPage from './pages/DriverDispatchPage';
 import DomainSetupPage from './pages/DomainSetupPage';
 
 const rootRoute = createRootRoute({
@@ -99,6 +100,12 @@ const driverLocationRoute = createRoute({
   component: DriverLocationUpdatePage,
 });
 
+const driverDispatchRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/driver/dispatch',
+  component: DriverDispatchPage,
+});
+
 const domainSetupRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/domain-setup',
@@ -119,6 +126,7 @@ const routeTree = rootRoute.addChildren([
   profileRoute,
   trackingRoute,
   driverLocationRoute,
+  driverDispatchRoute,
   domainSetupRoute,
 ]);
 

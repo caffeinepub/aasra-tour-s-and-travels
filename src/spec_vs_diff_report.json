@@ -1,50 +1,83 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-18T13:15:29.658Z",
-  "summary": "PWA manifest and HTML meta/links were added and the app registers a service worker; mobile/touch CSS improvements were made. However, the diff does not show the required generated PWA icon image files being added under the specified public assets path.",
+  "generatedAt": "2026-02-18T13:31:47.812Z",
+  "summary": "Diff adds a driver dispatch route, a new DriverDispatchPage, and React Query hooks for driver dispatch. However, the backend API implementation required for dispatch is not evidenced in the provided backend diff snippet, and several frontend acceptance-criteria elements (profile entry point, update-location navigation from dispatch details, and required-reason validation) are not fully verifiable due to truncation. Diff also includes unrelated features (PWA service worker registration, WhatsApp link/footer changes, and a backend migration adding a declined_by field).",
   "missing_requirements": [
     {
-      "id": "REQ-3",
-      "requirement": "Add the generated PWA icon assets into the project as static files under frontend/public/assets/generated and reference them from the PWA manifest.",
-      "reason": "The manifest references icon paths under /assets/generated, but the diff summary does not show the corresponding PNG icon files being added under frontend/public/assets/generated (only manifest and sw.js were added).",
+      "id": "REQ-1",
+      "requirement": "Backend APIs for driver dispatch: get caller’s assigned bookings sorted newest-first, and allow assigned driver to update their own booking status (accepted/refused/completed/cancelled) with optional refusal/cancellation reason persisted; enforce authorization and keep admin-only methods unchanged.",
+      "reason": "Frontend hooks call actor.getDriverDispatchBookings() and actor.updateDriverBookingStatus(update), but the backend/main.mo diff content provided is truncated and does not show these new methods or the authorization/sorting/reason-persistence logic. Cannot confirm implementation from the shown backend snippet.",
       "evidence": [
-        "frontend/public/manifest.webmanifest"
+        "backend/main.mo (truncated; does not show getDriverDispatchBookings/updateDriverBookingStatus)",
+        "frontend/src/hooks/useDriverDispatch.ts (calls actor.getDriverDispatchBookings and actor.updateDriverBookingStatus)"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "requirement": "Dispatch UI actions include Accept, Refuse (required reason with inline validation), Mark Completed, Cancel (required reason with inline validation), with detail panel and refresh via React Query invalidation after mutations.",
+      "reason": "DriverDispatchPage is truncated before the action handlers and UI rendering of actions/details, so required non-empty reason validation for Refuse/Cancel and the complete set of actions cannot be confirmed from the diff summary alone. React Query invalidation is evidenced in hooks, but the UI-side validation and action wiring is not fully visible.",
+      "evidence": [
+        "frontend/src/pages/DriverDispatchPage.tsx (truncated at handleAct...; reason state exists but validation/actions not shown)",
+        "frontend/src/hooks/useDriverDispatch.ts (invalidation present)"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Add prominent entry point from driver Profile page to dispatch inbox, and from dispatch details allow navigation to existing driver location update page (/driver/track/$bookingId).",
+      "reason": "Route /driver/dispatch is added, but ProfilePage changes are truncated and do not show an 'Open Dispatch' entry point. DriverDispatchPage is also truncated before any 'Update Location' navigation link/button can be verified.",
+      "evidence": [
+        "frontend/src/App.tsx (adds /driver/dispatch route)",
+        "frontend/src/pages/ProfilePage.tsx (truncated; no dispatch entry point visible)",
+        "frontend/src/pages/DriverDispatchPage.tsx (truncated; cannot confirm navigation to /driver/track/$bookingId)"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "requirement": "Cohesive warm/amber driver-dispatch visual theme with clear hierarchy and mobile-first layout; visually distinct statuses with consistent badges; prominent primary actions including Update Location.",
+      "reason": "Some badge/status styling logic is visible, but the file is truncated before layout and action button presentation can be assessed, and no explicit warm/amber theme cues or mobile-first safeguards (e.g., avoiding horizontal scroll) are verifiable from the truncated snippet alone.",
+      "evidence": [
+        "frontend/src/pages/DriverDispatchPage.tsx (truncated; only partial badge/status logic visible)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Added and registered a service worker (sw.js) for caching/offline behavior.",
-      "reason": "BuildRequest explicitly requested manifest, icons, and HTML meta tags for installability, but did not request adding a service worker or caching strategy.",
+      "description": "Backend data migration adds a new declined_by field to booking records and initializes it for existing bookings.",
+      "reason": "BuildRequest did not request adding a declined_by list or any migration related to declined drivers; it only requested driver-assigned inbox + status update with optional cancel/refuse reason.",
       "evidence": [
-        "frontend/public/sw.js",
-        "frontend/src/App.tsx"
+        "backend/migration.mo",
+        "backend/main.mo (with migration = Migration.run)"
       ]
     },
     {
-      "description": "Updated/added project tracking metadata in project_state.json describing the project as an Android app and adding AR-* feature requests.",
-      "reason": "BuildRequest does not request changes to project_state.json or adding internal tracking entries.",
+      "description": "Service worker registration / PWA support changes in the main App component.",
+      "reason": "BuildRequest does not mention PWA/service worker work; it focuses on driver dispatch workflow.",
       "evidence": [
-        "project_state.json"
+        "frontend/src/App.tsx (service worker registration code)"
+      ]
+    },
+    {
+      "description": "UI/marketing site changes (header/footer/content updates such as WhatsApp link and various responsive/mobile menu adjustments).",
+      "reason": "BuildRequest scope is dispatch workflow; these appear to be unrelated site-wide UX/content modifications.",
+      "evidence": [
+        "frontend-file-summaries.txt (SiteHeader/SiteFooter/businessInfo summaries indicating WhatsApp link and mobile menu changes)"
       ]
     }
   ],
-  "confidence": 0.74,
+  "confidence": 0.62,
   "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/index.html",
-    "frontend/public/manifest.webmanifest",
-    "frontend/public/sw.js",
     "frontend/src/App.tsx",
-    "frontend/src/components/SiteHeader.tsx",
-    "frontend/src/components/SiteLayout.tsx",
-    "frontend/src/index.css",
+    "frontend/src/hooks/useDriverDispatch.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/hooks/useTracking.ts",
     "frontend/src/pages/BookCabPage.tsx",
-    "frontend/src/pages/ContactPage.tsx",
-    "frontend/src/pages/HomePage.tsx",
+    "frontend/src/pages/DriverDispatchPage.tsx",
     "frontend/src/pages/ProfilePage.tsx",
-    "frontend/src/pages/TrackingPage.tsx",
+    "frontend/src/pages/admin/AdminBookingsPage.tsx",
     "project_state.json"
   ]
 }

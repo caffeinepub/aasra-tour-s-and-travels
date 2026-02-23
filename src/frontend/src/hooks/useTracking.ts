@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { BookingRequest, Location } from '../backend';
+import type { BookingRequestView, Location } from '../backend';
 
 export function useGetBookingForTracking(bookingId: bigint | null, enablePolling: boolean = false) {
   const { actor, isFetching } = useActor();
 
-  return useQuery<BookingRequest | null>({
+  return useQuery<BookingRequestView | null>({
     queryKey: ['tracking', 'booking', bookingId?.toString()],
     queryFn: async () => {
       if (!actor || !bookingId) return null;

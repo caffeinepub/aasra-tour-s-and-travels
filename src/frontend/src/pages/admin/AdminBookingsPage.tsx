@@ -1,563 +1,477 @@
 import { useState } from 'react';
-import { useInternetIdentity } from '../../hooks/useInternetIdentity';
-import { useAdminGuard } from '../../hooks/useAdminGuard';
-import { useGetAllBookings, useAssignDriver } from '../../hooks/useQueries';
-import { useGetCallerUserProfile, getProfileDisplayName } from '../../hooks/useCallerProfile';
+import { useGetAllBookings, useAssignDriver, useUpdateBookingStatus } from '../../hooks/useQueries';
 import { useGetRateCard, useUpdateRateCard } from '../../hooks/useRateCard';
-import { validatePrincipalText } from '../../utils/principalText';
-import AccessDeniedScreen from '../../components/AccessDeniedScreen';
+import { useAdminGuard } from '../../hooks/useAdminGuard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar, MapPin, User, Phone, Mail, MessageSquare, Clock, CreditCard, Star, IndianRupee, Loader2, UserCheck } from 'lucide-react';
-import type { BookingRequest, RateCard } from '../../backend';
-import { BookingStatus } from '../../backend';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { MapPin, Clock, User, Phone, Mail, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import AccessDeniedScreen from '../../components/AccessDeniedScreen';
+import { BookingStatus, type BookingRequestView, type RateCard } from '../../backend';
+import { validatePrincipalText } from '../../utils/principalText';
 
 export default function AdminBookingsPage() {
-  const { identity } = useInternetIdentity();
-  const { isAuthenticated, isAdmin, isLoading: guardLoading } = useAdminGuard();
-  const { data: userProfile, isLoading: profileLoading } = useGetCallerUserProfile();
+  const { isLoading: guardLoading, isAdmin } = useAdminGuard();
   const { data: bookings, isLoading: bookingsLoading } = useGetAllBookings();
   const { data: rateCard, isLoading: rateCardLoading } = useGetRateCard();
-  const updateRateCardMutation = useUpdateRateCard();
-  const assignDriverMutation = useAssignDriver();
-  const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(null);
+  const updateRateCard = useUpdateRateCard();
+  const assignDriver = useAssignDriver();
+  const updateStatus = useUpdateBookingStatus();
 
-  // Rate card form state
-  const [rateCardForm, setRateCardForm] = useState<{
-    mini: string;
-    sedan: string;
-    suv: string;
-    premiumSuv: string;
-  }>({
-    mini: '',
-    sedan: '',
-    suv: '',
-    premiumSuv: '',
-  });
-
-  // Driver assignment state
+  const [selectedBookingId, setSelectedBookingId] = useState<bigint | null>(null);
   const [driverPrincipalText, setDriverPrincipalText] = useState('');
-  const [driverPrincipalError, setDriverPrincipalError] = useState('');
+  const [principalError, setPrincipalError] = useState('');
+  const [editedRates, setEditedRates] = useState<RateCard | null>(null);
 
-  // Initialize form when rate card loads
-  useState(() => {
-    if (rateCard) {
-      setRateCardForm({
-        mini: rateCard.mini.toString(),
-        sedan: rateCard.sedan.toString(),
-        suv: rateCard.suv.toString(),
-        premiumSuv: rateCard.premiumSuv.toString(),
-      });
-    }
-  });
-
-  // Update form when rate card changes
-  if (rateCard && rateCardForm.mini === '' && rateCardForm.sedan === '' && rateCardForm.suv === '' && rateCardForm.premiumSuv === '') {
-    setRateCardForm({
-      mini: rateCard.mini.toString(),
-      sedan: rateCard.sedan.toString(),
-      suv: rateCard.suv.toString(),
-      premiumSuv: rateCard.premiumSuv.toString(),
-    });
-  }
-
-  // Show loading while checking authentication
-  if (guardLoading || profileLoading) {
+  if (guardLoading) {
     return (
       <div className="container mx-auto px-4 py-12">
-        <div className="space-y-4">
-          <Skeleton className="h-12 w-64" />
-          <Skeleton className="h-64 w-full" />
-        </div>
+        <Skeleton className="h-96 w-full" />
       </div>
     );
   }
 
-  // Show access denied if not authenticated or not admin
-  if (!isAuthenticated || !isAdmin) {
+  if (!isAdmin) {
     return <AccessDeniedScreen />;
   }
 
-  const handleRateCardSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const newRateCard: RateCard = {
-      mini: BigInt(parseInt(rateCardForm.mini) || 0),
-      sedan: BigInt(parseInt(rateCardForm.sedan) || 0),
-      suv: BigInt(parseInt(rateCardForm.suv) || 0),
-      premiumSuv: BigInt(parseInt(rateCardForm.premiumSuv) || 0),
-    };
+  const selectedBooking = bookings?.find((b) => b.id === selectedBookingId);
+
+  const handleAssignDriver = async () => {
+    if (!selectedBookingId) return;
+
+    setPrincipalError('');
+    const result = validatePrincipalText(driverPrincipalText);
+
+    if (!result.valid) {
+      setPrincipalError(result.error || 'Invalid principal');
+      return;
+    }
 
     try {
-      await updateRateCardMutation.mutateAsync(newRateCard);
+      await assignDriver.mutateAsync({
+        bookingId: selectedBookingId,
+        driverPrincipal: result.principal!,
+      });
+      setDriverPrincipalText('');
+      setPrincipalError('');
+    } catch (error: any) {
+      setPrincipalError(error.message || 'Failed to assign driver');
+    }
+  };
+
+  const handleUpdateStatus = async (bookingId: bigint, status: string) => {
+    try {
+      await updateStatus.mutateAsync({ bookingId, status });
+    } catch (error) {
+      console.error('Failed to update status:', error);
+    }
+  };
+
+  const handleSaveRateCard = async () => {
+    if (!editedRates) return;
+    try {
+      await updateRateCard.mutateAsync(editedRates);
+      setEditedRates(null);
     } catch (error) {
       console.error('Failed to update rate card:', error);
     }
   };
 
-  const handleAssignDriver = async () => {
-    if (!selectedBooking) return;
-
-    setDriverPrincipalError('');
-    const validation = validatePrincipalText(driverPrincipalText);
-
-    if (!validation.valid) {
-      setDriverPrincipalError(validation.error || 'Invalid Principal');
-      return;
-    }
-
-    try {
-      await assignDriverMutation.mutateAsync({
-        bookingId: selectedBooking.id,
-        driverPrincipal: validation.principal!,
-      });
-      setDriverPrincipalText('');
-      setDriverPrincipalError('');
-    } catch (error: any) {
-      setDriverPrincipalError(error.message || 'Failed to assign driver');
+  const getStatusBadgeVariant = (status: BookingStatus): 'default' | 'secondary' | 'destructive' | 'outline' => {
+    switch (status) {
+      case BookingStatus.accepted:
+        return 'default';
+      case BookingStatus.completed:
+        return 'secondary';
+      case BookingStatus.cancelled:
+      case BookingStatus.refused:
+        return 'destructive';
+      default:
+        return 'outline';
     }
   };
 
-  const getStatusBadge = (status: BookingStatus) => {
-    const statusMap: Record<BookingStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-      [BookingStatus.pending]: { label: 'Pending', variant: 'secondary' },
-      [BookingStatus.accepted]: { label: 'Accepted', variant: 'default' },
-      [BookingStatus.completed]: { label: 'Completed', variant: 'outline' },
-      [BookingStatus.cancelled]: { label: 'Cancelled', variant: 'destructive' },
-      [BookingStatus.refused]: { label: 'Refused', variant: 'destructive' },
-    };
-
-    const statusInfo = statusMap[status] || { label: status, variant: 'outline' };
-
-    return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
-  };
-
-  const formatDate = (timestamp: bigint) => {
-    const date = new Date(Number(timestamp));
-    return date.toLocaleString('en-IN', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    });
-  };
-
-  const formatPaymentMethod = (method: string | undefined) => {
-    if (!method || method.trim() === '') {
-      return 'Not provided';
+  const getStatusLabel = (status: BookingStatus): string => {
+    switch (status) {
+      case BookingStatus.pending:
+        return 'Pending';
+      case BookingStatus.accepted:
+        return 'Accepted';
+      case BookingStatus.completed:
+        return 'Completed';
+      case BookingStatus.cancelled:
+        return 'Cancelled';
+      case BookingStatus.refused:
+        return 'Refused';
+      default:
+        return 'Unknown';
     }
-    
-    const methodMap: Record<string, string> = {
-      cash: 'Cash',
-      upi: 'UPI',
-      card: 'Credit/Debit Card',
-      netbanking: 'Net Banking',
-    };
-
-    return methodMap[method.toLowerCase()] || method;
   };
-
-  const renderStarRating = (rating: bigint | undefined) => {
-    if (rating === undefined) {
-      return <span className="text-sm text-muted-foreground">Not provided</span>;
-    }
-
-    const ratingNumber = Number(rating);
-    return (
-      <div className="flex items-center gap-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={`h-4 w-4 ${
-              star <= ratingNumber
-                ? 'fill-amber-400 text-amber-400'
-                : 'fill-transparent text-muted-foreground'
-            }`}
-          />
-        ))}
-        <span className="ml-1 text-sm font-medium">{ratingNumber}/5</span>
-      </div>
-    );
-  };
-
-  const displayName = userProfile ? getProfileDisplayName(userProfile) : 'Admin';
 
   return (
     <div className="flex flex-col">
       {/* Header */}
-      <section className="border-b bg-muted/30 py-8">
+      <section className="border-b bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 py-8">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-              <p className="mt-1 text-muted-foreground">
-                Welcome back, {displayName}
-              </p>
-            </div>
-            <Badge variant="outline" className="text-sm">
-              {bookings?.length || 0} Total Bookings
-            </Badge>
-          </div>
+          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          <p className="mt-1 text-muted-foreground">Manage bookings and rate card</p>
         </div>
       </section>
 
       {/* Content */}
       <section className="flex-1 py-8">
         <div className="container mx-auto px-4">
-          <div className="space-y-8">
-            {/* Rate Card Section */}
+          <div className="space-y-6">
+            {/* Rate Card */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <IndianRupee className="h-5 w-5" />
-                  Rate Card Management
-                </CardTitle>
-                <CardDescription>Update per-kilometer rates for different vehicle types</CardDescription>
+                <CardTitle>Rate Card (₹/km)</CardTitle>
+                <CardDescription>Update per-kilometer rates for each vehicle type</CardDescription>
               </CardHeader>
               <CardContent>
                 {rateCardLoading ? (
-                  <div className="space-y-4">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                  </div>
+                  <Skeleton className="h-32 w-full" />
                 ) : (
-                  <form onSubmit={handleRateCardSubmit} className="space-y-4">
+                  <div className="space-y-4">
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                       <div className="space-y-2">
-                        <Label htmlFor="mini">Mini (₹/km)</Label>
+                        <Label htmlFor="mini">Mini</Label>
                         <Input
                           id="mini"
                           type="number"
-                          value={rateCardForm.mini}
-                          onChange={(e) => setRateCardForm({ ...rateCardForm, mini: e.target.value })}
-                          disabled={updateRateCardMutation.isPending}
+                          value={editedRates?.mini.toString() || rateCard?.mini.toString() || ''}
+                          onChange={(e) =>
+                            setEditedRates({
+                              ...(editedRates || rateCard!),
+                              mini: BigInt(e.target.value || 0),
+                            })
+                          }
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="sedan">Sedan (₹/km)</Label>
+                        <Label htmlFor="sedan">Sedan</Label>
                         <Input
                           id="sedan"
                           type="number"
-                          value={rateCardForm.sedan}
-                          onChange={(e) => setRateCardForm({ ...rateCardForm, sedan: e.target.value })}
-                          disabled={updateRateCardMutation.isPending}
+                          value={editedRates?.sedan.toString() || rateCard?.sedan.toString() || ''}
+                          onChange={(e) =>
+                            setEditedRates({
+                              ...(editedRates || rateCard!),
+                              sedan: BigInt(e.target.value || 0),
+                            })
+                          }
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="suv">SUV (₹/km)</Label>
+                        <Label htmlFor="suv">SUV</Label>
                         <Input
                           id="suv"
                           type="number"
-                          value={rateCardForm.suv}
-                          onChange={(e) => setRateCardForm({ ...rateCardForm, suv: e.target.value })}
-                          disabled={updateRateCardMutation.isPending}
+                          value={editedRates?.suv.toString() || rateCard?.suv.toString() || ''}
+                          onChange={(e) =>
+                            setEditedRates({
+                              ...(editedRates || rateCard!),
+                              suv: BigInt(e.target.value || 0),
+                            })
+                          }
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="premiumSuv">Premium SUV (₹/km)</Label>
+                        <Label htmlFor="premiumSuv">Premium SUV</Label>
                         <Input
                           id="premiumSuv"
                           type="number"
-                          value={rateCardForm.premiumSuv}
-                          onChange={(e) => setRateCardForm({ ...rateCardForm, premiumSuv: e.target.value })}
-                          disabled={updateRateCardMutation.isPending}
+                          value={editedRates?.premiumSuv.toString() || rateCard?.premiumSuv.toString() || ''}
+                          onChange={(e) =>
+                            setEditedRates({
+                              ...(editedRates || rateCard!),
+                              premiumSuv: BigInt(e.target.value || 0),
+                            })
+                          }
                         />
                       </div>
                     </div>
-                    <Button type="submit" disabled={updateRateCardMutation.isPending}>
-                      {updateRateCardMutation.isPending ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Updating...
-                        </>
-                      ) : (
-                        'Update Rate Card'
-                      )}
-                    </Button>
-                  </form>
+                    {editedRates && (
+                      <div className="flex gap-2">
+                        <Button onClick={handleSaveRateCard} disabled={updateRateCard.isPending}>
+                          {updateRateCard.isPending ? 'Saving...' : 'Save Rate Card'}
+                        </Button>
+                        <Button variant="outline" onClick={() => setEditedRates(null)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>
 
-            {/* Bookings Section */}
+            {/* Bookings */}
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Bookings List */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Booking Requests</CardTitle>
-                  <CardDescription>Click on a booking to view details</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {bookingsLoading ? (
-                    <div className="space-y-3">
-                      {[1, 2, 3].map((i) => (
-                        <Skeleton key={i} className="h-24 w-full" />
-                      ))}
-                    </div>
-                  ) : !bookings || bookings.length === 0 ? (
-                    <Alert>
-                      <AlertDescription>No booking requests yet</AlertDescription>
-                    </Alert>
-                  ) : (
-                    <ScrollArea className="h-[600px] pr-4">
-                      <div className="space-y-3">
-                        {bookings.map((booking) => (
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold">All Bookings</h2>
+                {bookingsLoading ? (
+                  <div className="space-y-3">
+                    <Skeleton className="h-32 w-full" />
+                    <Skeleton className="h-32 w-full" />
+                    <Skeleton className="h-32 w-full" />
+                  </div>
+                ) : !bookings || bookings.length === 0 ? (
+                  <Alert>
+                    <AlertCircle className="h-5 w-5" />
+                    <AlertTitle>No Bookings</AlertTitle>
+                    <AlertDescription>There are no booking requests yet.</AlertDescription>
+                  </Alert>
+                ) : (
+                  <ScrollArea className="h-[calc(100vh-24rem)]">
+                    <div className="space-y-3 pr-4">
+                      {bookings.map((booking) => {
+                        const pickupDate = new Date(Number(booking.pickup_time));
+                        const isSelected = selectedBookingId === booking.id;
+
+                        return (
                           <Card
                             key={booking.id.toString()}
-                            className={`cursor-pointer transition-colors hover:bg-muted/50 ${
-                              selectedBooking?.id === booking.id ? 'border-primary' : ''
+                            className={`cursor-pointer transition-all hover:shadow-md ${
+                              isSelected ? 'border-2 border-primary' : ''
                             }`}
-                            onClick={() => setSelectedBooking(booking)}
+                            onClick={() => setSelectedBookingId(booking.id)}
                           >
-                            <CardContent className="p-4">
-                              <div className="flex items-start justify-between">
-                                <div className="space-y-1">
-                                  <p className="font-medium">
+                            <CardHeader className="pb-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <div>
+                                  <CardTitle className="text-base">
+                                    Booking #{booking.id.toString()}
+                                  </CardTitle>
+                                  <CardDescription>
                                     {booking.first_name} {booking.last_name}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {booking.pickup_address}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {formatDate(booking.submit_time)}
-                                  </p>
+                                  </CardDescription>
                                 </div>
-                                {getStatusBadge(booking.status)}
+                                <Badge variant={getStatusBadgeVariant(booking.status)}>
+                                  {getStatusLabel(booking.status)}
+                                </Badge>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="space-y-2 text-sm">
+                              <div className="flex items-start gap-2">
+                                <MapPin className="mt-0.5 h-4 w-4 text-primary" />
+                                <p className="text-muted-foreground">{booking.pickup_address}</p>
+                              </div>
+                              <div className="flex items-start gap-2">
+                                <Clock className="mt-0.5 h-4 w-4 text-primary" />
+                                <p className="text-muted-foreground">
+                                  {pickupDate.toLocaleDateString()} at {pickupDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </p>
                               </div>
                             </CardContent>
                           </Card>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  )}
-                </CardContent>
-              </Card>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                )}
+              </div>
 
               {/* Booking Details */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Booking Details</CardTitle>
-                  <CardDescription>
-                    {selectedBooking ? `Booking #${selectedBooking.id}` : 'Select a booking to view details'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {!selectedBooking ? (
-                    <Alert>
-                      <AlertDescription>
-                        Select a booking from the list to view its details
-                      </AlertDescription>
-                    </Alert>
-                  ) : (
-                    <ScrollArea className="h-[600px] pr-4">
-                      <div className="space-y-6">
-                        {/* Driver Assignment Section */}
-                        <div className="space-y-3 p-4 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900">
-                          <h3 className="font-semibold flex items-center gap-2">
-                            <UserCheck className="h-4 w-4" />
-                            Accept & Assign Driver
-                          </h3>
-                          
-                          {selectedBooking.assigned_driver ? (
-                            <div className="space-y-2">
-                              <Alert>
-                                <AlertDescription>
-                                  <strong>Driver Assigned:</strong>
-                                  <br />
-                                  <span className="font-mono text-xs break-all">
-                                    {selectedBooking.assigned_driver.toString()}
-                                  </span>
-                                </AlertDescription>
-                              </Alert>
-                              <p className="text-sm text-muted-foreground">
-                                Status: {getStatusBadge(selectedBooking.status)}
+              <div className="space-y-4">
+                {selectedBooking ? (
+                  <>
+                    <h2 className="text-xl font-semibold">Booking Details</h2>
+                    <Card>
+                      <CardHeader>
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <CardTitle>Booking #{selectedBooking.id.toString()}</CardTitle>
+                            <CardDescription>
+                              {selectedBooking.first_name} {selectedBooking.last_name}
+                            </CardDescription>
+                          </div>
+                          <Badge variant={getStatusBadgeVariant(selectedBooking.status)}>
+                            {getStatusLabel(selectedBooking.status)}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {/* Trip Information */}
+                        <div className="space-y-3">
+                          <div className="flex items-start gap-3">
+                            <MapPin className="mt-1 h-5 w-5 text-primary" />
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">Pickup</p>
+                              <p className="font-semibold">{selectedBooking.pickup_address}</p>
+                              {selectedBooking.pickup_postal_code && (
+                                <p className="text-xs text-muted-foreground">{selectedBooking.pickup_postal_code}</p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-3">
+                            <MapPin className="mt-1 h-5 w-5 text-destructive" />
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">Destination</p>
+                              <p className="font-semibold">{selectedBooking.destination_address}</p>
+                              {selectedBooking.destination_postal_code && (
+                                <p className="text-xs text-muted-foreground">{selectedBooking.destination_postal_code}</p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-3">
+                            <Clock className="mt-1 h-5 w-5 text-primary" />
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">Pickup Time</p>
+                              <p className="font-semibold">
+                                {new Date(Number(selectedBooking.pickup_time)).toLocaleDateString()} at{' '}
+                                {new Date(Number(selectedBooking.pickup_time)).toLocaleTimeString()}
                               </p>
                             </div>
-                          ) : (
-                            <div className="space-y-3">
-                              <div className="space-y-2">
-                                <Label htmlFor="driverPrincipal">Driver Principal ID</Label>
-                                <Input
-                                  id="driverPrincipal"
-                                  type="text"
-                                  placeholder="Enter driver's Principal ID"
-                                  value={driverPrincipalText}
-                                  onChange={(e) => {
-                                    setDriverPrincipalText(e.target.value);
-                                    setDriverPrincipalError('');
-                                  }}
-                                  disabled={assignDriverMutation.isPending}
-                                  className="font-mono text-sm"
-                                />
-                                {driverPrincipalError && (
-                                  <p className="text-sm text-destructive">{driverPrincipalError}</p>
-                                )}
-                              </div>
-                              <Button
-                                onClick={handleAssignDriver}
-                                disabled={assignDriverMutation.isPending || !driverPrincipalText.trim()}
-                                className="w-full bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-700"
-                              >
-                                {assignDriverMutation.isPending ? (
-                                  <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Assigning...
-                                  </>
-                                ) : (
-                                  <>
-                                    <UserCheck className="mr-2 h-4 w-4" />
-                                    Accept & Assign Driver
-                                  </>
-                                )}
-                              </Button>
-                              <p className="text-xs text-muted-foreground">
-                                This will accept the booking and assign it to the specified driver
-                              </p>
-                            </div>
-                          )}
+                          </div>
                         </div>
 
                         <Separator />
 
-                        {/* Customer Information */}
+                        {/* Contact Information */}
                         <div className="space-y-3">
-                          <h3 className="font-semibold">Customer Information</h3>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex items-center gap-2">
-                              <User className="h-4 w-4 text-muted-foreground" />
-                              <span>
+                          <div className="flex items-start gap-3">
+                            <User className="mt-1 h-5 w-5 text-primary" />
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">Passenger</p>
+                              <p className="font-semibold">
                                 {selectedBooking.first_name} {selectedBooking.last_name}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Mail className="h-4 w-4 text-muted-foreground" />
-                              <span>{selectedBooking.email}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Phone className="h-4 w-4 text-muted-foreground" />
-                              <span>{selectedBooking.phone_number}</span>
+                              </p>
                             </div>
                           </div>
-                        </div>
 
-                        <Separator />
-
-                        {/* Trip Details */}
-                        <div className="space-y-3">
-                          <h3 className="font-semibold">Trip Details</h3>
-                          <div className="space-y-3 text-sm">
+                          <div className="flex items-start gap-3">
+                            <Phone className="mt-1 h-5 w-5 text-primary" />
                             <div>
-                              <div className="flex items-start gap-2 mb-1">
-                                <MapPin className="h-4 w-4 text-green-600 mt-0.5" />
-                                <span className="font-medium">Pickup</span>
-                              </div>
-                              <p className="ml-6 text-muted-foreground">
-                                {selectedBooking.pickup_address}
-                              </p>
-                              <p className="ml-6 text-xs text-muted-foreground">
-                                {selectedBooking.pickup_postal_code}
-                              </p>
+                              <p className="text-sm font-medium text-muted-foreground">Phone</p>
+                              <p className="font-semibold">{selectedBooking.phone_number}</p>
                             </div>
+                          </div>
+
+                          <div className="flex items-start gap-3">
+                            <Mail className="mt-1 h-5 w-5 text-primary" />
                             <div>
-                              <div className="flex items-start gap-2 mb-1">
-                                <MapPin className="h-4 w-4 text-red-600 mt-0.5" />
-                                <span className="font-medium">Destination</span>
-                              </div>
-                              <p className="ml-6 text-muted-foreground">
-                                {selectedBooking.destination_address}
-                              </p>
-                              <p className="ml-6 text-xs text-muted-foreground">
-                                {selectedBooking.destination_postal_code}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-muted-foreground" />
-                              <div>
-                                <span className="font-medium">Pickup Time: </span>
-                                <span className="text-muted-foreground">
-                                  {formatDate(selectedBooking.pickup_time)}
-                                </span>
-                              </div>
+                              <p className="text-sm font-medium text-muted-foreground">Email</p>
+                              <p className="break-all font-semibold">{selectedBooking.email}</p>
                             </div>
                           </div>
                         </div>
 
-                        <Separator />
-
-                        {/* Booking Information */}
-                        <div className="space-y-3">
-                          <h3 className="font-semibold">Booking Information</h3>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4 text-muted-foreground" />
-                              <div>
-                                <span className="font-medium">Submitted: </span>
-                                <span className="text-muted-foreground">
-                                  {formatDate(selectedBooking.submit_time)}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <CreditCard className="h-4 w-4 text-muted-foreground" />
-                              <div>
-                                <span className="font-medium">Payment: </span>
-                                <span className="text-muted-foreground">
-                                  {formatPaymentMethod(selectedBooking.paymentMethod)}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Ratings */}
-                        {(selectedBooking.driver_rating || selectedBooking.cab_rating) && (
-                          <>
-                            <Separator />
-                            <div className="space-y-3">
-                              <h3 className="font-semibold">Ratings</h3>
-                              <div className="space-y-2">
-                                {selectedBooking.driver_rating && (
-                                  <div>
-                                    <p className="text-sm font-medium mb-1">Driver Service</p>
-                                    {renderStarRating(selectedBooking.driver_rating)}
-                                  </div>
-                                )}
-                                {selectedBooking.cab_rating && (
-                                  <div>
-                                    <p className="text-sm font-medium mb-1">Cab Condition</p>
-                                    {renderStarRating(selectedBooking.cab_rating)}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </>
-                        )}
-
-                        {/* Comments */}
                         {selectedBooking.comments && (
                           <>
                             <Separator />
-                            <div className="space-y-2">
-                              <h3 className="font-semibold flex items-center gap-2">
-                                <MessageSquare className="h-4 w-4" />
-                                Comments
-                              </h3>
-                              <p className="text-sm text-muted-foreground">
-                                {selectedBooking.comments}
-                              </p>
+                            <div className="rounded-lg bg-muted/50 p-3">
+                              <p className="mb-1 text-sm font-medium text-muted-foreground">Comments</p>
+                              <p className="text-sm">{selectedBooking.comments}</p>
                             </div>
                           </>
                         )}
-                      </div>
-                    </ScrollArea>
-                  )}
-                </CardContent>
-              </Card>
+
+                        {selectedBooking.assigned_driver && (
+                          <>
+                            <Separator />
+                            <Alert>
+                              <CheckCircle2 className="h-5 w-5" />
+                              <AlertTitle>Assigned Driver</AlertTitle>
+                              <AlertDescription className="break-all font-mono text-xs">
+                                {selectedBooking.assigned_driver.toString()}
+                              </AlertDescription>
+                            </Alert>
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    {/* Actions */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Actions</CardTitle>
+                        <CardDescription>Assign driver or update booking status</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {/* Assign Driver */}
+                        <div className="space-y-2">
+                          <Label htmlFor="driverPrincipal">Driver Principal ID</Label>
+                          <Input
+                            id="driverPrincipal"
+                            value={driverPrincipalText}
+                            onChange={(e) => {
+                              setDriverPrincipalText(e.target.value);
+                              setPrincipalError('');
+                            }}
+                            placeholder="Enter driver principal ID"
+                            disabled={assignDriver.isPending}
+                          />
+                          {principalError && (
+                            <Alert variant="destructive">
+                              <XCircle className="h-5 w-5" />
+                              <AlertDescription>{principalError}</AlertDescription>
+                            </Alert>
+                          )}
+                          <Button
+                            onClick={handleAssignDriver}
+                            disabled={!driverPrincipalText.trim() || assignDriver.isPending}
+                            className="w-full"
+                          >
+                            {assignDriver.isPending ? 'Assigning...' : selectedBooking.status === BookingStatus.pending ? 'Accept & Assign Driver' : 'Assign Driver'}
+                          </Button>
+                        </div>
+
+                        <Separator />
+
+                        {/* Status Updates */}
+                        <div className="space-y-2">
+                          <Label>Update Status</Label>
+                          <div className="grid gap-2">
+                            <Button
+                              onClick={() => handleUpdateStatus(selectedBooking.id, 'accepted')}
+                              disabled={updateStatus.isPending || selectedBooking.status === BookingStatus.accepted}
+                              variant="default"
+                              size="sm"
+                            >
+                              Mark as Accepted
+                            </Button>
+                            <Button
+                              onClick={() => handleUpdateStatus(selectedBooking.id, 'completed')}
+                              disabled={updateStatus.isPending || selectedBooking.status === BookingStatus.completed}
+                              variant="secondary"
+                              size="sm"
+                            >
+                              Mark as Completed
+                            </Button>
+                            <Button
+                              onClick={() => handleUpdateStatus(selectedBooking.id, 'cancelled')}
+                              disabled={updateStatus.isPending || selectedBooking.status === BookingStatus.cancelled}
+                              variant="destructive"
+                              size="sm"
+                            >
+                              Mark as Cancelled
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </>
+                ) : (
+                  <Alert>
+                    <AlertCircle className="h-5 w-5" />
+                    <AlertTitle>Select a Booking</AlertTitle>
+                    <AlertDescription>
+                      Click on a booking from the list to view details and perform actions.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
             </div>
           </div>
         </div>

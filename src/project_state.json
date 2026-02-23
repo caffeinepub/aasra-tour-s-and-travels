@@ -1,33 +1,40 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Project is an Android app.",
+  "summary": "Project to build an Android app that includes a driver-facing booking dispatch system.",
   "architectural_notes": [],
   "known_issues": [],
   "isFixRequest": false,
-  "imageRequirements": "## Required Images\n- Square app icon with a clean, modern cab/travel mark and warm earthy palette (pwa-icon-192.dim_192x192.png)\n- Square app icon with a clean, modern cab/travel mark and warm earthy palette (pwa-icon-512.dim_512x512.png)\n- Maskable square app icon variant with generous safe area and warm earthy palette (pwa-maskable-512.dim_512x512.png)",
   "existing_features": [
     {
-      "id": "feature-add-progressive-web-app-pwa-support-so-the-existing-aasra-cab-web-app-can-be-installed-and-used-like-an-android-app-add-to-home-screen-including-a-web-app-manifest-required-android-icon-sizes-and-appropriate-html-meta-tags",
-      "title": "Add Progressive Web App (PWA) support so the existing AASRA cab web app can be installed and used like an Android app (Add to Home Screen), including a web app manifest, required Android icon sizes, and appropriate HTML meta tags.",
-      "reqIds": [
-        "REQ-1"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-the-installed-pwa-experience-works-well-on-android-by-verifying-key-screens-are-responsive-and-touch-friendly-header-navigation-booking-flow-contact-options-and-tracking-screens-and-that-content-is-not-clipped-on-small-viewports",
-      "title": "Ensure the installed PWA experience works well on Android by verifying key screens are responsive and touch-friendly (header navigation, booking flow, contact options, and tracking screens) and that content is not clipped on small viewports.",
+      "id": "feature-create-a-driver-dispatch-ui-that-lets-an-authenticated-driver-view-and-manage-their-assigned-bookings-include-an-assigned-bookings-list-with-key-details-booking-id-pickup-destination-pickup-time-customer-name-phone-current-status-a-detail-panel-and-clear-actions-to-accept-refuse-with-required-reason-mark-completed-and-cancel-with-required-reason",
+      "title": "Create a driver dispatch UI that lets an authenticated driver view and manage their assigned bookings: include an “Assigned Bookings” list with key details (booking id, pickup/destination, pickup time, customer name/phone, current status), a detail panel, and clear actions to Accept, Refuse (with required reason), Mark Completed, and Cancel (with required reason).",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-the-generated-pwa-icon-assets-into-the-project-as-static-files-under-frontend-public-assets-generated-and-reference-them-from-the-pwa-manifest",
-      "title": "Add the generated PWA icon assets into the project as static files under frontend/public/assets/generated and reference them from the PWA manifest.",
+      "id": "feature-add-navigation-routes-for-the-driver-dispatch-workflow-introduce-a-route-for-the-dispatch-inbox-e-g-driver-dispatch-and-ensure-drivers-can-easily-jump-from-an-assigned-booking-to-the-existing-location-update-page-driver-track-bookingid-add-a-prominent-entry-point-from-the-profile-page-driver-profile-to-the-dispatch-inbox",
+      "title": "Add navigation/routes for the driver dispatch workflow: introduce a route for the dispatch inbox (e.g., /driver/dispatch) and ensure drivers can easily jump from an assigned booking to the existing location update page (/driver/track/$bookingId). Add a prominent entry point from the Profile page (driver profile) to the dispatch inbox.",
       "reqIds": [
         "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-react-query-hooks-for-driver-dispatch-provide-a-query-hook-for-fetching-the-caller-s-assigned-bookings-and-mutation-hooks-for-driver-status-updates-and-reason-when-applicable-ensure-query-keys-and-invalidation-patterns-are-consistent-with-existing-booking-tracking-hooks",
+      "title": "Add React Query hooks for driver dispatch: provide a query hook for fetching the caller’s assigned bookings and mutation hooks for driver status updates (and reason when applicable). Ensure query keys and invalidation patterns are consistent with existing booking/tracking hooks.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-a-cohesive-driver-dispatch-visual-theme-consistent-with-the-app-s-existing-warm-amber-styling-clear-hierarchy-for-new-active-completed-states-high-contrast-status-badges-and-mobile-first-layout-that-works-well-in-the-android-build",
+      "title": "Apply a cohesive driver-dispatch visual theme consistent with the app’s existing warm/amber styling: clear hierarchy for “new/active/completed” states, high-contrast status badges, and mobile-first layout that works well in the Android build.",
+      "reqIds": [
+        "REQ-5"
       ],
       "version": 1
     }
@@ -35,13 +42,20 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Build an Android app",
+      "summary": "Add booking dispatch system for driver (receive and manage booking assignments).",
       "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Add backend APIs to support a driver dispatch workflow: (1) allow an authenticated driver to fetch a list of bookings assigned to them, sorted by newest first, and (2) allow an assigned driver to update the status of their own booking to one of: accepted, refused, completed, or cancelled (and when cancelled/refused, store an optional reason). Enforce authorization so only the assigned driver (or admin where appropriate) can access these APIs.",
+      "reqIds": [
+        "REQ-1"
+      ],
       "status": "pending"
     }
   ],
-  "gameProjectType": "none",
-  "projectName": "AASRA Cab App",
+  "projectName": "AASRA Driver Dispatch",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

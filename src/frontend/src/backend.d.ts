@@ -28,7 +28,45 @@ export interface RateCard {
     sedan: bigint;
     premiumSuv: bigint;
 }
-export interface BookingRequest {
+export interface ReferralBonus {
+    driverBonus: bigint;
+    customerBonus: bigint;
+}
+export interface DriverProfile {
+    cabNumber: string;
+    vehicleType: VehicleType;
+    fullName: string;
+    yearOfManufacture: bigint;
+}
+export interface BookingRequestInput {
+    destination_address: string;
+    pickup_address: string;
+    paymentMethod: string;
+    pickup_postal_code: string;
+    submit_time: bigint;
+    cab_rating?: bigint;
+    cancel_reason?: string;
+    email: string;
+    pickup_time: bigint;
+    first_name: string;
+    last_name: string;
+    comments: string;
+    phone_number: string;
+    destination_postal_code: string;
+    driver_rating?: bigint;
+}
+export interface Attachment {
+    contentType: string;
+    blob: ExternalBlob;
+    name: string;
+    uploadTime: bigint;
+}
+export interface DriverBookingUpdate {
+    status: BookingStatus;
+    bookingId: bigint;
+    reason?: string;
+}
+export interface BookingRequestView {
     id: bigint;
     destination_address: string;
     status: BookingStatus;
@@ -37,6 +75,7 @@ export interface BookingRequest {
     pickup_postal_code: string;
     submit_time: bigint;
     cab_rating?: bigint;
+    declined_by: Array<Principal>;
     cancel_reason?: string;
     email: string;
     driver_location?: Location;
@@ -49,22 +88,6 @@ export interface BookingRequest {
     destination_postal_code: string;
     driver_rating?: bigint;
     submitted_by: Principal;
-}
-export interface ReferralBonus {
-    driverBonus: bigint;
-    customerBonus: bigint;
-}
-export interface DriverProfile {
-    cabNumber: string;
-    vehicleType: VehicleType;
-    fullName: string;
-    yearOfManufacture: bigint;
-}
-export interface Attachment {
-    contentType: string;
-    blob: ExternalBlob;
-    name: string;
-    uploadTime: bigint;
 }
 export type UserProfile = {
     __kind__: "customer";
@@ -107,20 +130,23 @@ export interface backendInterface {
     assignDriver(bookingId: bigint, driver: Principal): Promise<void>;
     awardReferralBonuses(bookingId: bigint, customerBonus: bigint, driverBonus: bigint): Promise<void>;
     generateReferralCode(): Promise<string>;
-    getAllBookings(): Promise<Array<BookingRequest>>;
+    getAllBookings(): Promise<Array<BookingRequestView>>;
     getAttachment(attachmentType: Variant_cab_driver, user: Principal): Promise<Attachment | null>;
-    getBooking(id: bigint): Promise<BookingRequest>;
+    getBooking(id: bigint): Promise<BookingRequestView>;
     getCallerAttachment(attachmentType: Variant_cab_driver): Promise<Attachment | null>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getDriverBookings(): Promise<Array<BookingRequestView>>;
+    getDriverDispatchBookings(): Promise<Array<BookingRequestView>>;
     getDriverLocation(bookingId: bigint): Promise<Location | null>;
     getRateCard(): Promise<RateCard>;
     getReferralBonus(): Promise<ReferralBonus | null>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
-    submitBooking(form: BookingRequest): Promise<bigint>;
+    submitBooking(form: BookingRequestInput): Promise<bigint>;
     updateBookingStatus(bookingId: bigint, statusText: string): Promise<void>;
+    updateDriverBookingStatus(update: DriverBookingUpdate): Promise<void>;
     updateDriverLocation(bookingId: bigint, location: Location): Promise<void>;
     updateRateCard(newRateCard: RateCard): Promise<void>;
     uploadAttachment(attachmentType: Variant_cab_driver, file: ExternalBlob, name: string, contentType: string): Promise<void>;

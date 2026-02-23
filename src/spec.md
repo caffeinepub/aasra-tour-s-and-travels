@@ -1,12 +1,14 @@
 # Specification
 
 ## Summary
-**Goal:** Make the existing AASRA cab web app installable and usable like an Android-friendly PWA (Add to Home Screen) with a proper manifest, icons, and mobile-ready UI.
+**Goal:** Enable drivers to view and act on their assigned bookings via a dedicated dispatch inbox, backed by new driver-authorized APIs.
 
 **Planned changes:**
-- Add and link a valid web app manifest that includes required fields (name, short_name, start_url, display: standalone, theme_color, background_color, icons).
-- Add appropriate PWA-related HTML meta tags needed for installability and correct Android launch behavior.
-- Add PWA icon assets as static files under `frontend/public/assets/generated` and reference them from the manifest (including at least 192x192 and 512x512).
-- Verify and adjust key screens for Android responsiveness and touch usability (header navigation, booking flow, contact options, tracking screens) to avoid clipping and horizontal scrolling on small viewports.
+- Add backend endpoints for authenticated drivers to fetch their assigned bookings (newest first) and to update the status of their own assigned bookings (accepted, refused, completed, cancelled) with optional refusal/cancellation reason persisted on the booking.
+- Enforce authorization so only the assigned driver (and admin where appropriate) can access/modify bookings via these new driver dispatch APIs; keep existing admin-only booking methods unchanged.
+- Create a driver dispatch screen showing an “Assigned Bookings” list, a booking detail panel, and actions: Accept, Refuse (reason required), Mark Completed, Cancel (reason required), plus a link to the existing location update page for that booking.
+- Add route/navigation for the dispatch inbox (e.g., `/driver/dispatch`) and add an entry point from the driver Profile page to open the dispatch inbox; allow navigation to `/driver/track/$bookingId` from dispatch details.
+- Add React Query hooks for fetching assigned bookings and mutating driver booking status updates, with consistent query keys and invalidation to refresh list/details after changes.
+- Apply a mobile-first dispatch UI theme consistent with existing warm/amber styling, including clear high-contrast status badges and prominent primary actions.
 
-**User-visible outcome:** Users on Android (e.g., Chrome) can install the web app from the browser and launch it in standalone mode, with core screens remaining touch-friendly and usable on common phone sizes.
+**User-visible outcome:** A driver can open a Dispatch inbox to see only their assigned bookings, view details, update booking statuses (with required reasons for refuse/cancel), and jump to the existing location update screen for a selected booking.
